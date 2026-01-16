@@ -1,0 +1,120 @@
+{
+  "_comentario": "Configuração de módulos para geração modular de propostas",
+  "_versao": "1.0",
+  "_data_atualizacao": "2025-10-16",
+  
+  "OLC02H2M2M": {
+    "descricao": "Guindaste Compacto 2.5T com 2 Hidráulicas + 2 Manuais, Manual",
+    "modulos": [
+      "CAPAS/Capa_OLC.docx",
+      "DADOS_CLIENTE/Dados_Cliente_Padrao.docx",
+      "ESPECIFICACOES/OLC/OLC02_Especificacoes.docx",
+      "CONFIGURACOES/H2M2_Configuracao.docx",
+      "GRAFICOS/Pagina_Graficos_Template.docx",
+      "RODAPES/Termos_Comerciais_2025.docx"
+    ],
+    "imagens": {
+      "render_codigo": "OLC02",
+      "grafico_codigo": "OLC02H2M2"
+    },
+    "dados_tecnicos_obrigatorios": true
+  },
+  
+  "OLC08H3M1M": {
+    "descricao": "Guindaste Compacto 8.5T com 3 Hidráulicas + 1 Manual, Manual",
+    "modulos": [
+      "CAPAS/Capa_OLC.docx",
+      "DADOS_CLIENTE/Dados_Cliente_Padrao.docx",
+      "ESPECIFICACOES/OLC/OLC08_Especificacoes.docx",
+      "CONFIGURACOES/H3M1_Configuracao.docx",
+      "GRAFICOS/Pagina_Graficos_Template.docx",
+      "RODAPES/Termos_Comerciais_2025.docx"
+    ],
+    "imagens": {
+      "render_codigo": "OLC08",
+      "grafico_codigo": "OLC08H3M1"
+    },
+    "dados_tecnicos_obrigatorios": true
+  },
+  
+  "OLC08KH3M2E1": {
+    "descricao": "Guindaste Compacto Canivete 8.5T com 3 Hidráulicas + 2 Manuais, Elétrico 12V",
+    "modulos": [
+      "CAPAS/Capa_OLC.docx",
+      "DADOS_CLIENTE/Dados_Cliente_Padrao.docx",
+      "ESPECIFICACOES/OLC/OLC08_Especificacoes.docx",
+      "CONFIGURACOES/KH3M2_Configuracao_Canivete.docx",
+      "GRAFICOS/Pagina_Graficos_Template.docx",
+      "RODAPES/Termos_Comerciais_2025.docx"
+    ],
+    "imagens": {
+      "render_codigo": "OLC08K",
+      "grafico_codigo": "OLC08KH3M2"
+    },
+    "dados_tecnicos_obrigatorios": true
+  },
+  
+  "OLG08H3M1M": {
+    "descricao": "Guindaste Giratório 8.5T com 3 Hidráulicas + 1 Manual, Manual",
+    "modulos": [
+      "CAPAS/Capa_OLG.docx",
+      "DADOS_CLIENTE/Dados_Cliente_Padrao.docx",
+      "ESPECIFICACOES/OLG/OLG08_Especificacoes.docx",
+      "CONFIGURACOES/H3M1_Configuracao.docx",
+      "GRAFICOS/Pagina_Graficos_Template.docx",
+      "RODAPES/Termos_Comerciais_2025.docx"
+    ],
+    "imagens": {
+      "render_codigo": "OLG08",
+      "grafico_codigo": "OLG08H3M1"
+    },
+    "dados_tecnicos_obrigatorios": true
+  },
+  
+  "OLE10NIS46": {
+    "descricao": "Cesto Aéreo 10.0T, Não Isolado, Simples 46kV",
+    "modulos": [
+      "CAPAS/Capa_OLE.docx",
+      "DADOS_CLIENTE/Dados_Cliente_Padrao.docx",
+      "ESPECIFICACOES/OLE/OLE10_Especificacoes.docx",
+      "CONFIGURACOES/Isolamento_NI.docx",
+      "CONFIGURACOES/Classe_S46.docx",
+      "GRAFICOS/Pagina_Graficos_Template.docx",
+      "RODAPES/Termos_Comerciais_2025.docx"
+    ],
+    "imagens": {
+      "render_codigo": "OLE10",
+      "grafico_codigo": "OLE10NIS46"
+    },
+    "dados_tecnicos_obrigatorios": true
+  },
+  
+  "_modulos_compartilhados": {
+    "comentario": "Módulos que são usados por múltiplos equipamentos",
+    "lista": [
+      "DADOS_CLIENTE/Dados_Cliente_Padrao.docx",
+      "GRAFICOS/Pagina_Graficos_Template.docx",
+      "RODAPES/Termos_Comerciais_2025.docx",
+      "CONFIGURACOES/H2M2_Configuracao.docx",
+      "CONFIGURACOES/H3M1_Configuracao.docx"
+    ]
+  },
+  
+  "_vantagens_sistema_modular": [
+    "Reutilização de módulos compartilhados (ex: Termos Comerciais)",
+    "Atualização centralizada - mudar 1 arquivo afeta todas as propostas",
+    "Flexibilidade - fácil criar novas combinações de equipamentos",
+    "Manutenção simplificada - módulos menores e mais fáceis de editar",
+    "Escalabilidade - fácil adicionar novos equipamentos"
+  ],
+  
+  "_desvantagens_sistema_modular": [
+    "Complexidade inicial - mais difícil de implementar",
+    "Performance - merge de documentos é mais lento que preencher 1 template",
+    "Dependências - requer biblioteca adicional (docxcompose)",
+    "Migração - trabalho de converter templates atuais em módulos",
+    "Debugging - mais difícil identificar origem de problemas",
+    "Gestão - muitos arquivos para gerenciar"
+  ]
+}
+

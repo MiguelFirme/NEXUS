@@ -1,0 +1,46 @@
+{
+  "numero": "2601160001",
+  "data_criacao": "2026-01-16T13:30:13.776866",
+  "data_atualizacao": "2026-01-16T13:30:52.648125",
+  "vendedor": "Miguel Firme",
+  "setor": "SETOR DE DESENVOLVIMENTO",
+  "cliente": {
+    "razao_social": "-",
+    "telefone": "-",
+    "cnpj": "-",
+    "cidade": "-",
+    "contato": "-",
+    "email": "-",
+    "inscricao_estadual": "",
+    "endereco": ""
+  },
+  "equipamento": "",
+  "situacao": "Novo registro",
+  "status": "Ativa",
+  "prioridade": "alta",
+  "prazo_resposta": "30",
+  "origem": "manual",
+  "observacoes": "Desenvolver essa bagaça",
+  "historico": [
+    {
+      "data": "2026-01-16T13:30:13.776866",
+      "status_anterior": "",
+      "status_novo": "Pendência registrada no setor SETOR DE DESENVOLVIMENTO.",
+      "usuario": "Miguel Firme"
+    },
+    {
+      "data": "2026-01-16T13:30:52.648125",
+      "status_anterior": "Novo contato",
+      "status_novo": "Novo registro",
+      "usuario": "Miguel Firme"
+    }
+  ],
+  "propostas_vinculadas": [],
+  "anexos": [],
+  "tags": [],
+  "metadata": {
+    "versao": "1.0",
+    "ultima_modificacao": "2026-01-16T13:30:52.648125",
+    "modificado_por": "Miguel Firme"
+  }
+}

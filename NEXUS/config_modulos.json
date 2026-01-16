@@ -1,0 +1,76 @@
+{
+  "_versao": "2.0",
+  "_descricao": "Configuração de módulos para sistema modular de propostas - Olivo Guindastes",
+  "_data_criacao": "2025-10-16",
+  "_autor": "Sistema PROPCOM",
+  
+  "modelos": {
+    "OLC02H2M2M": {
+      "descricao": "Guindaste Compacto 2.5T, 2 Hidráulicas + 2 Manuais, Manual",
+      "tipo": "OLC",
+      "capacidade": "02",
+      "configuracao": "H2M2",
+      "comando": "M",
+      "opcional": "NENHUM",
+      
+      "modulos": [
+        "01_CAPAS/Capa_OLC_Compacto.docx",
+        "02_DADOS_CLIENTE/Secao_Dados_Cliente.docx",
+        "03_ESPECIFICACOES/OLC/OLC02_Especificacoes.docx",
+        "04_CONFIGURACOES/H2M2_Configuracao.docx",
+        "07_GRAFICOS/Secao_Graficos_Template.docx",
+        "09_RODAPES/Termos_Comerciais_2025.docx"
+      ],
+      
+      "imagens": {
+        "render": "OLC02",
+        "grafico": "OLC02H2M2"
+      },
+      
+      "dados_obrigatorios": ["CODIGO", "CARGA", "LANÇAS_H", "LANÇAS_M", "PESO"]
+    },
+    
+    "OLC08H3M1M": {
+      "descricao": "Guindaste Compacto 8.5T, 3 Hidráulicas + 1 Manual, Manual",
+      "tipo": "OLC",
+      "capacidade": "08",
+      "configuracao": "H3M1",
+      "comando": "M",
+      "opcional": "NENHUM",
+      
+      "modulos": [
+        "01_CAPAS/Capa_OLC_Compacto.docx",
+        "02_DADOS_CLIENTE/Secao_Dados_Cliente.docx",
+        "03_ESPECIFICACOES/OLC/OLC08_Especificacoes.docx",
+        "04_CONFIGURACOES/H3M1_Configuracao.docx",
+        "07_GRAFICOS/Secao_Graficos_Template.docx",
+        "09_RODAPES/Termos_Comerciais_2025.docx"
+      ],
+      
+      "imagens": {
+        "render": "OLC08",
+        "grafico": "OLC08H3M1"
+      },
+      
+      "dados_obrigatorios": ["CODIGO", "CARGA", "LANÇAS_H", "LANÇAS_M", "PESO"]
+    }
+  },
+  
+  "_instrucoes": {
+    "como_adicionar_modelo": "Copie um modelo existente e ajuste os valores",
+    "estrutura_modulos": "Caminho relativo à pasta MODULOS",
+    "placeholders_suportados": {
+      "dados_cliente": ["(RAZAO_SOCIAL)", "(CPF_CNPJ)", "(INSCRICAO)", "(ENDERECO)"],
+      "dados_tecnicos": ["(CODIGO)", "(CARGA)", "(PESO)", "etc"],
+      "imagens": ["(RENDER)", "(GRAFICO)"]
+    }
+  },
+  
+  "_notas": [
+    "Este arquivo configura quais módulos usar para cada modelo de equipamento",
+    "Módulos são arquivos Word individuais combinados para formar a proposta",
+    "Antes de usar, crie a estrutura de pastas MODULOS conforme GUIA_RAPIDO_INICIO.md",
+    "Cada modelo pode ter sua própria combinação de módulos"
+  ]
+}
+
