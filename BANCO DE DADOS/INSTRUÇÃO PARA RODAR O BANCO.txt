@@ -1,0 +1,25 @@
+PASSO 01:
+
+Dentro do pgAdmin:
+
+CREATE DATABASE "Nexus_DB";
+
+
+PASSO 02:
+
+No terminal:
+
+RESTAURANDO ESTRUTURA DO BANCO
+psql -U postgres "Nexus_DB" -f db/estrutura.sql
+
+
+RESTAURANDO DADOS
+psql -U postgres "Nexus_DB" -f db/banco_com_dados.sql
+
+
+---------------------------------------------------------------
+Após finalizar modificações no banco, rodar os seguintes comandos no terminal da pasta onde se encontra o banco:
+
+psql -U postgres "Nexus_DB" -f db/banco_com_dados.sql
+
+pg_dump -s -U postgres "Nexus_DB" > estrutura.sql

@@ -1,8 +1,7 @@
 {
   "numero": "2601160001",
   "data_criacao": "2026-01-16T13:30:13.776866",
-  "data_atualizacao": "2026-01-16T13:30:52.648125",
-  "vendedor": "Miguel Firme",
+  "data_atualizacao": "2026-01-19T09:52:01.236564",
   "setor": "SETOR DE DESENVOLVIMENTO",
   "cliente": {
     "razao_social": "-",
@@ -15,7 +14,7 @@
     "endereco": ""
   },
   "equipamento": "",
-  "situacao": "Novo registro",
+  "situacao": "Em análise",
   "status": "Ativa",
   "prioridade": "alta",
   "prazo_resposta": "30",
@@ -33,6 +32,12 @@
       "status_anterior": "Novo contato",
       "status_novo": "Novo registro",
       "usuario": "Miguel Firme"
+    },
+    {
+      "data": "2026-01-19T09:52:01.236564",
+      "status_anterior": "Novo registro",
+      "status_novo": "Em análise",
+      "usuario": "Miguel Firme"
     }
   ],
   "propostas_vinculadas": [],
@@ -40,7 +45,8 @@
   "tags": [],
   "metadata": {
     "versao": "1.0",
-    "ultima_modificacao": "2026-01-16T13:30:52.648125",
+    "ultima_modificacao": "2026-01-19T09:52:01.236564",
     "modificado_por": "Miguel Firme"
-  }
+  },
+  "usuario": "Miguel Firme"
 }
