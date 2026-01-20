@@ -10,16 +10,15 @@ PASSO 02:
 No terminal:
 
 RESTAURANDO ESTRUTURA DO BANCO
-psql -U postgres "Nexus_DB" -f db/estrutura.sql
-
+psql -U postgres -d "Nexus_DB" -f estrutura.sql
 
 RESTAURANDO DADOS
-psql -U postgres "Nexus_DB" -f db/banco_com_dados.sql
+psql -U postgres -d "Nexus_DB" -f banco_com_dados.sql
 
 
 ---------------------------------------------------------------
 Após finalizar modificações no banco, rodar os seguintes comandos no terminal da pasta onde se encontra o banco:
 
-psql -U postgres "Nexus_DB" -f db/banco_com_dados.sql
-
 pg_dump -s -U postgres "Nexus_DB" > estrutura.sql
+
+pg_dump -s -U postgres "Nexus_DB" > banco_com_dados.sql
