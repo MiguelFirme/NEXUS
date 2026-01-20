@@ -31,8 +31,8 @@ class InterfacePrincipalAbas:
         self._configurar_estilos()
         
         # Configurar tamanho e centralizar na tela
-        largura = 1400
-        altura = 900
+        largura = 1200
+        altura = 800
         
         # Obter dimensões da tela
         largura_tela = self.root.winfo_screenwidth()
@@ -43,7 +43,7 @@ class InterfacePrincipalAbas:
         pos_y = (altura_tela - altura) // 2 - 50  # Mover 50px para cima
         
         self.root.geometry(f"{largura}x{altura}+{pos_x}+{pos_y}")
-        self.root.resizable(False, False)
+        self.root.resizable(True, True)
         
         # Usar dados do usuário já validados (fornecidos pelo iniciar.py)
         if codigo_usuario_validado is not None and dados_usuario_validado:
@@ -356,7 +356,7 @@ class InterfacePrincipalAbas:
         self.combo_status_pendencia = ttk.Combobox(filtros_frame, state='readonly', width=20)
         # Carregar status baseados nas pastas disponíveis
         try:
-            from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+            from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
             pastas_status = GerenciadorPendenciasJSON.PASTAS_STATUS
             # Mapear nomes de pastas para nomes mais amigáveis
             mapeamento_status = {
@@ -815,7 +815,7 @@ class InterfacePrincipalAbas:
             
             # Usar instância reutilizável ao invés de criar nova
             if not hasattr(self, 'ger_pendencias') or self.ger_pendencias is None:
-                from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+                from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
                 self.ger_pendencias = GerenciadorPendenciasJSON()
             
             ger_pend = self.ger_pendencias
@@ -1333,7 +1333,7 @@ class InterfacePrincipalAbas:
             # PRIORIDADE 1: Usar PENDÊNCIA ATIVA (seleção definitiva e persistente)
             if usar_ativa and self.pendencia_ativa:
                 # Buscar dados atualizados da pendência ativa
-                from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+                from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
                 ger = GerenciadorPendenciasJSON()
                 pendencia = ger.ler_pendencia(self.pendencia_ativa)
                 
@@ -1414,7 +1414,7 @@ class InterfacePrincipalAbas:
             numero: Número da pendência a ativar
         """
         try:
-            from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+            from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
             ger = GerenciadorPendenciasJSON()
             
             # Carregar dados completos
@@ -1543,7 +1543,7 @@ class InterfacePrincipalAbas:
     def _obter_dados_pendencia(self, numero_pendencia):
         """Obtém dados completos da pendência"""
         try:
-            from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+            from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
             
             gerenciador = GerenciadorPendenciasJSON()
             dados = gerenciador.ler_pendencia(numero_pendencia)
@@ -1571,7 +1571,7 @@ class InterfacePrincipalAbas:
     def _editar_pendencia_centralizada(self, numero_pendencia):
         """Interface centralizada para editar pendência - combina todas as funcionalidades"""
         # Verificar permissão de edição
-        from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+        from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
         ger = GerenciadorPendenciasJSON()
         pendencia = ger.ler_pendencia(numero_pendencia)
         if pendencia and not self._verificar_permissao_editar(pendencia):
@@ -1653,7 +1653,7 @@ class InterfacePrincipalAbas:
             return
         
         # Verificar permissão de edição
-        from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+        from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
         ger = GerenciadorPendenciasJSON()
         pendencia = ger.ler_pendencia(numero_proposta)
         if pendencia and not self._verificar_permissao_editar(pendencia):
@@ -1897,7 +1897,7 @@ class InterfacePrincipalAbas:
             return
         
         # Verificar permissão de edição
-        from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+        from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
         ger = GerenciadorPendenciasJSON()
         pendencia = ger.ler_pendencia(numero_proposta)
         if pendencia and not self._verificar_permissao_editar(pendencia):
@@ -1913,7 +1913,7 @@ class InterfacePrincipalAbas:
             from atualizador_situacao import AtualizadorSituacao
             
             # Obter dados completos da pendência
-            from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+            from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
             ger_pend = GerenciadorPendenciasJSON()
             dados_pendencia = ger_pend.ler_pendencia(numero_proposta)
             
@@ -1951,7 +1951,7 @@ class InterfacePrincipalAbas:
         # Índices: 0:N°Proposta, 1:Data, 2:Hora, 3:Situação
         # Obter dados completos da pendência
         numero_proposta = valores[0]
-        from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+        from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
         ger = GerenciadorPendenciasJSON()
         pendencia = ger.ler_pendencia(numero_proposta)
         if not pendencia:
@@ -2014,7 +2014,7 @@ class InterfacePrincipalAbas:
                 return
             
             # Executar arquivamento
-            from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+            from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
             ger_pend = GerenciadorPendenciasJSON()
             
             usuario = self.usuario_detectado['nome'] if self.usuario_detectado else 'Sistema'
@@ -2056,7 +2056,7 @@ class InterfacePrincipalAbas:
         # Índices: 0:N°Proposta, 1:Data, 2:Hora, 3:Situação
         # Obter dados completos da pendência
         numero_proposta = valores[0]
-        from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+        from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
         ger = GerenciadorPendenciasJSON()
         pendencia = ger.ler_pendencia(numero_proposta)
         if not pendencia:
@@ -2134,7 +2134,7 @@ class InterfacePrincipalAbas:
                 return
             
             # Executar deleção (remoção permanente do arquivo)
-            from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+            from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
             ger_pend = GerenciadorPendenciasJSON()
             
             if ger_pend.deletar_pendencia(numero_proposta, motivo):
@@ -2739,7 +2739,7 @@ class InterfacePrincipalAbas:
         """Recarrega os dados da pendência ativa após edição"""
         try:
             if self.pendencia_ativa:
-                from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+                from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
                 ger = GerenciadorPendenciasJSON()
                 self.pendencia_ativa_dados = ger.ler_pendencia(self.pendencia_ativa)
                 print(f"✓ Pendência ativa {self.pendencia_ativa} recarregada")

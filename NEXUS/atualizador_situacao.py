@@ -6,7 +6,7 @@ Responsável por alterar o status/situação de uma pendência selecionada
 
 import tkinter as tk
 from tkinter import ttk, messagebox
-from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
 from datetime import datetime
 
 class AtualizadorSituacao:

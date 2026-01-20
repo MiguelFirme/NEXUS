@@ -27,7 +27,7 @@ class EditorPendencias:
             callback_atualizacao (function): Função para ser chamada após atualização
         """
         try:
-            from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+            from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
             ger = GerenciadorPendenciasJSON()
             
             pendencia = ger.ler_pendencia(numero_pendencia)
@@ -314,7 +314,7 @@ class EditorPendencias:
                 """Arquiva a pendência"""
                 if messagebox.askyesno("Confirmar", f"Arquivar pendência {numero_pendencia}?"):
                     try:
-                        from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+                        from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
                         ger_pend = GerenciadorPendenciasJSON()
                         
                         resultado = ger_pend.arquivar_pendencia(numero_pendencia, "Venda Perdida via editor")

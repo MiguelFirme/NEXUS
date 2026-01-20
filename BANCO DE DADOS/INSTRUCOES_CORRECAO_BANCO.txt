@@ -1,0 +1,18 @@
+⚠️ IMPORTANTE: CORREÇÃO DA EXIBIÇÃO DE DADOS ⚠️
+
+Para que os dados do cliente e o histórico apareçam corretamente na interface, você precisa executar um pequeno script SQL no seu banco de dados PostgreSQL (Nexus_DB).
+
+PASSO A PASSO:
+1. Abra o seu gerenciador do PostgreSQL (pgAdmin ou similar).
+2. Conecte-se ao banco 'Nexus_DB'.
+3. Abra uma ferramenta de Query (Query Tool).
+4. Copie e cole o conteúdo do arquivo 'ajuste_json_columns.sql' (que está nesta mesma pasta).
+5. Execute o script (F5).
+
+O QUE ESSE SCRIPT FAZ:
+Ele adiciona 3 colunas que estavam faltando na tabela 'nexus.pendencias':
+- 'cliente': Armazena Razão Social, CNPJ, Telefone, etc.
+- 'historico': Armazena o rastro de alterações da pendência.
+- 'propostas_vinculadas': Armazena a lista de PDFs vinculados.
+
+Após executar o script e substituir o arquivo 'gerenciador_pendencias_json.py' pelo novo que enviei, o sistema voltará a exibir todos os dados corretamente!

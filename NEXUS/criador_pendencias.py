@@ -196,19 +196,13 @@ class CriadorPendencias:
                 prioridade_mapeada = 'normal'
             
             # Criar pendência
-            from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+            from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
             ger_pend = GerenciadorPendenciasJSON()
             
             resultado = ger_pend.criar_pendencia(
-                cliente='',  # Removido
-                telefone='',  # Removido
-                equipamento='',  # Removido
-                cnpj='',  # Removido
                 vendedor_manual=usuario_selecionado,
                 setor_manual=setor_selecionado,
                 observacoes=observacoes if observacoes else '',
-                inscricao='',  # Removido
-                endereco='',  # Removido
                 prioridade=prioridade_mapeada,
                 prazo_resposta=prazo_resposta
             )

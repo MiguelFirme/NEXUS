@@ -31,7 +31,7 @@ def renderizar_painel_detalhes(interface, numero_pendencia):
 
     try:
         # Carregar dados completos do JSON
-        from gerenciador_pendencias_json import GerenciadorPendenciasJSON
+        from NEXUS.gerenciador_pendencias_json import GerenciadorPendenciasJSON
         ger = GerenciadorPendenciasJSON()
         pendencia = ger.ler_pendencia(numero_pendencia)
 
