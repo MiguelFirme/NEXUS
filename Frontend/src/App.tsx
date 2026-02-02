@@ -7,6 +7,7 @@ import Typography from "@mui/material/Typography";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import Header from "./components/Header";
+import Footer from "./components/Footer";
 import Filters from "./components/Filters";
 import PendenciasList from "./components/PendenciasList";
 import PendenciaDetails from "./components/PendenciaDetails";
@@ -257,6 +258,8 @@ export default function App() {
           </Alert>
         ) : undefined}
       </Snackbar>
+      <Footer />
     </Box>
   );
 }
+
