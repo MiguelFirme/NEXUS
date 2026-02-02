@@ -18,13 +18,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        String email = body.get("emailUsuario");
+        String nomeUsuario = body.get("nomeUsuario");
         String senha = body.get("senha");
-        if (email == null || email.isBlank() || senha == null || senha.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "E-mail e senha são obrigatórios."));
+        if (nomeUsuario == null || nomeUsuario.isBlank() || senha == null || senha.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Nome de usuário e senha são obrigatórios."));
         }
         try {
-            AuthService.LoginResult result = authService.login(email.trim(), senha);
+            AuthService.LoginResult result = authService.login(nomeUsuario.trim(), senha);
             return ResponseEntity.ok(Map.of(
                     "token", result.token(),
                     "usuario", result.usuario()
@@ -39,13 +39,13 @@ public class AuthController {
      */
     @PostMapping("/definir-senha")
     public ResponseEntity<?> definirSenha(@RequestBody Map<String, String> body) {
-        String email = body.get("emailUsuario");
+        String nomeUsuario = body.get("nomeUsuario");
         String novaSenha = body.get("novaSenha");
-        if (email == null || email.isBlank() || novaSenha == null || novaSenha.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "E-mail e nova senha são obrigatórios."));
+        if (nomeUsuario == null || nomeUsuario.isBlank() || novaSenha == null || novaSenha.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Nome de usuário e nova senha são obrigatórios."));
         }
         try {
-            AuthService.LoginResult result = authService.definirSenha(email.trim(), novaSenha);
+            AuthService.LoginResult result = authService.definirSenha(nomeUsuario.trim(), novaSenha);
             return ResponseEntity.ok(Map.of(
                     "token", result.token(),
                     "usuario", result.usuario()

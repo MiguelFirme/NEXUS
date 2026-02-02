@@ -53,4 +53,6 @@ export type Pendencia = PendenciaDTO & {
   data?: string;
   /** Hora extraída de dataCriacao (opcional) */
   hora?: string;
+  /** Flag indicando se está atrasada (prazo vencido) */
+  atrasada?: boolean;
 };

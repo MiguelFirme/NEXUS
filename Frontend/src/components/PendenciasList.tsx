@@ -48,6 +48,19 @@ function PrioridadeChip({ prioridade }: { prioridade?: string }) {
   );
 }
 
+function AtrasadaChip({ atrasada }: { atrasada?: boolean }) {
+  if (!atrasada) return <span>—</span>;
+  return (
+    <Chip
+      label="Atrasada"
+      size="small"
+      color="error"
+      variant="filled"
+      sx={{ fontWeight: 600, fontSize: "0.75rem" }}
+    />
+  );
+}
+
 export default function PendenciasList({ pendencias, onSelect }: Props) {
   return (
     <TableContainer sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
@@ -61,6 +74,9 @@ export default function PendenciasList({ pendencias, onSelect }: Props) {
               Data
             </TableCell>
             <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
+              Data final
+            </TableCell>
+            <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
               Hora
             </TableCell>
             <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
@@ -69,12 +85,15 @@ export default function PendenciasList({ pendencias, onSelect }: Props) {
             <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
               Prioridade
             </TableCell>
+            <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
+              Status
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {pendencias.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary" }}>
+              <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
                 Nenhuma pendência encontrada
               </TableCell>
             </TableRow>
@@ -87,11 +106,23 @@ export default function PendenciasList({ pendencias, onSelect }: Props) {
                 sx={{
                   cursor: "pointer",
                   "&:hover": { bgcolor: "action.hover" },
+                  bgcolor: p.atrasada ? "rgba(244, 67, 54, 0.08)" : "transparent",
                 }}
               >
                 <TableCell sx={{ fontWeight: 500 }}>{p.titulo}</TableCell>
                 <TableCell sx={{ color: "text.secondary" }}>
                   {p.data ? new Date(p.data).toLocaleDateString("pt-BR") : "—"}
+                </TableCell>
+                <TableCell sx={{ color: "text.secondary" }}>
+                  {p.dataCriacao && p.prazoResposta != null ? (() => {
+                    try {
+                      const d = new Date(p.dataCriacao);
+                      d.setDate(d.getDate() + (p.prazoResposta ?? 0));
+                      return d.toLocaleDateString("pt-BR");
+                    } catch {
+                      return "—";
+                    }
+                  })() : "—"}
                 </TableCell>
                 <TableCell sx={{ color: "text.secondary" }}>{p.hora ?? "—"}</TableCell>
                 <TableCell>
@@ -99,6 +130,9 @@ export default function PendenciasList({ pendencias, onSelect }: Props) {
                 </TableCell>
                 <TableCell>
                   <PrioridadeChip prioridade={p.prioridade} />
+                </TableCell>
+                <TableCell>
+                  <AtrasadaChip atrasada={p.atrasada} />
                 </TableCell>
               </TableRow>
             ))

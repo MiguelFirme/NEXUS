@@ -17,9 +17,11 @@ import java.util.List;
 public class PendenciaController {
 
     private final PendenciaService pendenciaService;
+    private final com.example.Nexus.Services.UsuarioService usuarioService;
 
-    public PendenciaController(PendenciaService pendenciaService) {
+    public PendenciaController(PendenciaService pendenciaService, com.example.Nexus.Services.UsuarioService usuarioService) {
         this.pendenciaService = pendenciaService;
+        this.usuarioService = usuarioService;
     }
 
     /**
@@ -60,6 +62,18 @@ public class PendenciaController {
             @RequestBody PatchPendenciaDTO dto
     ) {
         return pendenciaService.patch(id, dto);
+    }
+
+    /** Remove uma pendência (somente usuários nível >= 3) */
+    @DeleteMapping("/{id}")
+    public java.util.Map<String, String> delete(@PathVariable Integer id, org.springframework.security.core.Authentication authentication) {
+        com.example.Nexus.config.CurrentUser current = (com.example.Nexus.config.CurrentUser) authentication.getPrincipal();
+        var atual = usuarioService.buscarPorId(current.getId());
+        if (atual.getNivelUsuario() == null || atual.getNivelUsuario() < 3) {
+            throw new RuntimeException("Acesso negado");
+        }
+        pendenciaService.delete(id);
+        return java.util.Map.of("message", "Pendência removida");
     }
 
 

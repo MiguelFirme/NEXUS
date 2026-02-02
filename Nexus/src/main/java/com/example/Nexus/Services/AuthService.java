@@ -21,16 +21,16 @@ public class AuthService {
     }
 
     /**
-     * Login: valida email e senha, retorna token JWT e dados do usuário (sem senha).
+     * Login: valida nome de usuário e senha, retorna token JWT e dados do usuário (sem senha).
      */
-    public LoginResult login(String emailUsuario, String senha) {
-        Usuario usuario = usuarioRepository.findByEmailUsuario(emailUsuario)
-                .orElseThrow(() -> new RuntimeException("E-mail ou senha inválidos."));
+    public LoginResult login(String nomeUsuario, String senha) {
+        Usuario usuario = usuarioRepository.findByNomeUsuario(nomeUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário ou senha inválidos."));
         if (usuario.getSenha() == null || usuario.getSenha().isBlank()) {
             throw new RuntimeException("Senha ainda não definida. Use \"Definir senha\" para criar sua senha.");
         }
         if (!passwordEncoder.matches(senha, usuario.getSenha())) {
-            throw new RuntimeException("E-mail ou senha inválidos.");
+            throw new RuntimeException("Usuário ou senha inválidos.");
         }
         String token = jwtService.generateToken(usuario.getId(), usuario.getEmailUsuario(), usuario.getIdSetor());
         UsuarioDTO dto = toDTO(usuario);
@@ -41,8 +41,8 @@ public class AuthService {
      * Define a primeira senha para um usuário que ainda não tem (senha nula).
      * Após definir, retorna token (login automático).
      */
-    public LoginResult definirSenha(String emailUsuario, String novaSenha) {
-        Usuario usuario = usuarioRepository.findByEmailUsuario(emailUsuario)
+    public LoginResult definirSenha(String nomeUsuario, String novaSenha) {
+        Usuario usuario = usuarioRepository.findByNomeUsuario(nomeUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
         if (usuario.getSenha() != null && !usuario.getSenha().isBlank()) {
             throw new RuntimeException("Este usuário já possui senha. Use o login normal.");
@@ -63,6 +63,7 @@ public class AuthService {
         dto.setEmailUsuario(u.getEmailUsuario());
         dto.setIdSetor(u.getIdSetor());
         dto.setCargoUsuario(u.getCargoUsuario());
+        dto.setNivelUsuario(u.getNivelUsuario());
         return dto;
     }
 }

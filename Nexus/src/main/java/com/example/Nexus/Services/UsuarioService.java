@@ -4,6 +4,7 @@ import com.example.Nexus.DTOs.UsuarioDTO;
 import com.example.Nexus.Entities.Usuario;
 import com.example.Nexus.Repositories.UsuarioRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,9 +14,28 @@ import java.util.stream.Collectors;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public UsuarioDTO buscarPorId(Integer id) {
+        return usuarioRepository.findById(id).map(this::toDTO).orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+    }
+
+    public UsuarioDTO atualizarNivel(Integer id, Integer novoNivel) {
+        Usuario u = usuarioRepository.findById(id).orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+        u.setNivelUsuario(novoNivel);
+        usuarioRepository.save(u);
+        return toDTO(u);
+    }
+
+    public void atualizarSenha(Integer id, String novaSenha) {
+        Usuario u = usuarioRepository.findById(id).orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+        u.setSenha(passwordEncoder.encode(novaSenha));
+        usuarioRepository.save(u);
     }
 
     public List<UsuarioDTO> listarTodos() {

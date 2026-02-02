@@ -5,7 +5,14 @@ import Chip from "@mui/material/Chip";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Paper from "@mui/material/Paper";
+import Button from "@mui/material/Button";
 import type { Pendencia } from "../types";
+import { uploadAnexo, getAnexos } from "../services/api";
+import Link from "@mui/material/Link";
+import IconButton from "@mui/material/IconButton";
+import UploadFileRounded from "@mui/icons-material/UploadFileRounded";
+import Image from "@mui/material/CardMedia";
+import { useEffect } from "react";
 
 type Props = { pendencia: Pendencia | null };
 
@@ -186,6 +193,13 @@ function HistoricoContent({ historico }: { historico?: unknown }) {
 
 export default function PendenciaDetails({ pendencia }: Props) {
   const [tab, setTab] = useState(0);
+  const [anexos, setAnexos] = useState<{ filename: string; url: string }[]>([]);
+  const [file, setFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    if (!pendencia) return;
+    getAnexos(pendencia.id).then(setAnexos).catch(() => setAnexos([]));
+  }, [pendencia]);
 
   if (!pendencia) {
     return (
@@ -268,6 +282,45 @@ export default function PendenciaDetails({ pendencia }: Props) {
             {pendencia.ultimaModificacao && (
               <span>Última modificação: {new Date(pendencia.ultimaModificacao).toLocaleString("pt-BR")}</span>
             )}
+          </Box>
+
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+              Anexos
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+              {anexos.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">Nenhum anexo</Typography>
+              ) : (
+                anexos.map((a) => (
+                  <Box key={a.filename} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Link href={a.url} target="_blank" rel="noreferrer">{a.filename}</Link>
+                  </Box>
+                ))
+              )}
+            </Box>
+
+            <Box sx={{ mt: 1, display: "flex", gap: 1, alignItems: "center" }}>
+              <input id="anexo-input" type="file" style={{ display: "none" }} onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+              <label htmlFor="anexo-input">
+                <IconButton component="span" color="primary" aria-label="Anexar">
+                  <UploadFileRounded />
+                </IconButton>
+              </label>
+              <Button variant="outlined" size="small" onClick={async () => {
+                if (!file || !pendencia) return;
+                try {
+                  await uploadAnexo(pendencia.id, file);
+                  const list = await getAnexos(pendencia.id);
+                  setAnexos(list);
+                  setFile(null);
+                } catch (e:any) {
+                  alert(e?.message ?? 'Falha no upload');
+                }
+              }}>
+                Enviar anexo
+              </Button>
+            </Box>
           </Box>
         </Box>
       )}

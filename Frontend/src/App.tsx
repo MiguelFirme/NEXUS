@@ -14,10 +14,14 @@ import ActionsPanel from "./components/ActionsPanel";
 import NewPendenciaModal from "./components/NewPendenciaModal";
 import EditPendenciaModal from "./components/EditPendenciaModal";
 import UpdateSituacaoModal from "./components/UpdateSituacaoModal";
-import { getPendencias } from "./services/api";
+import { getPendencias, deletePendencia } from "./services/api";
 import type { Pendencia } from "./types";
+import Login from "./components/Login";
+import { useAuth } from "./contexts/AuthContext";
 
 export default function App() {
+  const { token, isReady, usuario } = useAuth();
+  const [pendenciasRaw, setPendenciasRaw] = useState<Pendencia[]>([]);
   const [pendencias, setPendencias] = useState<Pendencia[]>([]);
   const [selected, setSelected] = useState<Pendencia | null>(null);
   const [openNew, setOpenNew] = useState(false);
@@ -28,16 +32,94 @@ export default function App() {
   const fetch = async () => {
     try {
       const data = await getPendencias();
-      setPendencias(data);
+      setPendenciasRaw(data);
+      setPendencias(processPendencias(data));
     } catch (err) {
       console.error("Erro ao buscar pendências (verifique se o backend está rodando em " + (import.meta.env.VITE_API_URL ?? "http://localhost:8080") + ")", err);
+      setPendenciasRaw([]);
       setPendencias([]);
     }
   };
 
+  const applyFilters = (filters?: { periodStart?: string; periodEnd?: string; status?: string; prioridade?: string }) => {
+    if (!filters) {
+      setPendencias(processPendencias(pendenciasRaw));
+      return;
+    }
+
+    let filtered = [...pendenciasRaw];
+
+    // Filtrar por período
+    if (filters.periodStart) {
+      filtered = filtered.filter((p) => p.data >= filters.periodStart!);
+    }
+    if (filters.periodEnd) {
+      filtered = filtered.filter((p) => p.data <= filters.periodEnd!);
+    }
+
+    // Filtrar por status/situação
+    // Suporta flag "exceto": se filters.statusExcept for true, remove pendências com a situação selecionada
+    const statusExcept = (filters as any).statusExcept === true;
+    if (filters.status && filters.status !== "Todas") {
+      if (statusExcept) {
+        filtered = filtered.filter((p) => p.situacao !== filters.status);
+      } else {
+        filtered = filtered.filter((p) => p.situacao === filters.status);
+      }
+    }
+
+    // Filtrar por prioridade
+    const prioridadeExcept = (filters as any).prioridadeExcept === true;
+    if (filters.prioridade && filters.prioridade !== "Todas") {
+      if (prioridadeExcept) {
+        filtered = filtered.filter((p) => p.prioridade !== filters.prioridade);
+      } else {
+        filtered = filtered.filter((p) => p.prioridade === filters.prioridade);
+      }
+    }
+
+    setPendencias(processPendencias(filtered));
+  };
+
+  const processPendencias = (list: Pendencia[]): Pendencia[] => {
+    return list
+      .map((p) => ({
+        ...p,
+        atrasada: isAtrasada(p),
+      }))
+      .sort((a, b) => {
+        // Ordenar por atraso primeiro (atrasadas no topo)
+        if (a.atrasada && !b.atrasada) return -1;
+        if (!a.atrasada && b.atrasada) return 1;
+
+        // Depois por prioridade: Alta > Média > Baixa
+        const prioridadeOrder: { [key: string]: number } = { Alta: 0, Média: 1, Baixa: 2 };
+        const aPrio = prioridadeOrder[a.prioridade || ""] ?? 3;
+        const bPrio = prioridadeOrder[b.prioridade || ""] ?? 3;
+        return aPrio - bPrio;
+      });
+  };
+
+  const isAtrasada = (p: Pendencia): boolean => {
+    if (!p.dataCriacao || !p.prazoResposta) return false;
+
+    const dataCriacao = new Date(p.dataCriacao);
+    const dataLimite = new Date(dataCriacao);
+    dataLimite.setDate(dataLimite.getDate() + p.prazoResposta);
+
+    return new Date() > dataLimite;
+  };
+
   useEffect(() => {
+    // apenas busca pendências quando o auth estiver pronto e houver token
+    if (!isReady) return;
+    if (!token) return;
     fetch();
-  }, []);
+  }, [isReady, token]);
+
+  if (isReady && !token) {
+    return <Login />;
+  }
 
   const showSnackbar = (message: string, severity: "success" | "error" | "info") => {
     setSnackbar({ message, severity });
@@ -67,7 +149,7 @@ export default function App() {
           <Typography variant="subtitle1" fontWeight={600} color="text.primary" sx={{ mb: 2 }}>
             Filtros
           </Typography>
-          <Filters onApply={fetch} />
+          <Filters onApply={applyFilters} />
         </Paper>
 
         <Grid container spacing={3}>
@@ -100,6 +182,20 @@ export default function App() {
                   onUpdateSituacao={() => setOpenSituacao(true)}
                   onTransferir={() => showSnackbar("Transferir: funcionalidade em breve.", "info")}
                   selected={selected}
+                    canCreate={!!usuario && (usuario.nivelUsuario ?? 0) > 2}
+                    canDelete={!!usuario && (usuario.nivelUsuario ?? 0) >= 3}
+                    onDelete={async (p) => {
+                      if (!p) return;
+                      try {
+                        await deletePendencia(p.id);
+                        setSelected(null);
+                        await fetch();
+                        showSnackbar("Pendência removida.", "success");
+                      } catch (e:any) {
+                        console.error(e);
+                        showSnackbar(e?.message ?? "Falha ao remover pendência.", "error");
+                      }
+                    }}
                 />
               </Box>
             </Paper>

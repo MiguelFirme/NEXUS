@@ -4,8 +4,16 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
 import Avatar from "@mui/material/Avatar";
+import IconButton from "@mui/material/IconButton";
+import PeopleRounded from "@mui/icons-material/PeopleRounded";
+import ExitToAppRounded from "@mui/icons-material/ExitToAppRounded";
+import { useState } from "react";
+import UsersModal from "./UsersModal";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Header() {
+  const { usuario, logout } = useAuth();
+  const [openUsers, setOpenUsers] = useState(false);
   return (
     <AppBar
       position="static"
@@ -40,10 +48,10 @@ export default function Header() {
         <Box sx={{ flex: 1 }} />
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>
-            Miguel Firme
+            {usuario?.nomeUsuario ?? "Miguel Firme"}
           </Typography>
           <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.6)" }}>
-            Desenvolvimento
+            {usuario?.cargoUsuario ?? "Desenvolvimento"}
           </Typography>
           <Avatar
             sx={{
@@ -55,8 +63,19 @@ export default function Header() {
           >
             MF
           </Avatar>
+          {usuario?.nivelUsuario === 4 ? (
+            <IconButton sx={{ ml: 1 }} onClick={() => setOpenUsers(true)} color="inherit">
+              <PeopleRounded />
+            </IconButton>
+          ) : null}
+          {usuario ? (
+            <IconButton sx={{ ml: 1 }} onClick={() => { logout(); setOpenUsers(false); }} color="inherit">
+              <ExitToAppRounded />
+            </IconButton>
+          ) : null}
         </Box>
       </Toolbar>
+      <UsersModal open={openUsers} onClose={() => setOpenUsers(false)} />
     </AppBar>
   );
 }

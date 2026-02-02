@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { login as apiLogin, definirSenha as apiDefinirSenha } from "../services/api";
 
 export type UsuarioLogado = {
   id: number;
@@ -6,13 +7,14 @@ export type UsuarioLogado = {
   emailUsuario?: string;
   idSetor?: number;
   cargoUsuario?: string;
+  nivelUsuario?: number;
 };
 
 type AuthContextValue = {
   token: string | null;
   usuario: UsuarioLogado | null;
-  login: (email: string, senha: string) => Promise<void>;
-  definirSenha: (email: string, novaSenha: string) => Promise<void>;
+  login: (nomeUsuario: string, senha: string) => Promise<void>;
+  definirSenha: (nomeUsuario: string, novaSenha: string) => Promise<void>;
   logout: () => void;
   isReady: boolean;
 };
@@ -42,17 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsReady(true);
   }, []);
 
-  const login = useCallback(async (email: string, senha: string) => {
-    const baseURL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
-    const res = await fetch(`${baseURL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emailUsuario: email.trim(), senha }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.message ?? "Falha no login.");
-    }
+  const login = useCallback(async (nomeUsuario: string, senha: string) => {
+    const data = await apiLogin(nomeUsuario, senha);
     const t = data.token as string;
     const u = data.usuario as UsuarioLogado;
     setToken(t);
@@ -61,17 +54,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_USUARIO, JSON.stringify(u));
   }, []);
 
-  const definirSenha = useCallback(async (email: string, novaSenha: string) => {
-    const baseURL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
-    const res = await fetch(`${baseURL}/auth/definir-senha`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emailUsuario: email.trim(), novaSenha }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.message ?? "Falha ao definir senha.");
-    }
+  const definirSenha = useCallback(async (nomeUsuario: string, novaSenha: string) => {
+    const data = await apiDefinirSenha(nomeUsuario, novaSenha);
     const t = data.token as string;
     const u = data.usuario as UsuarioLogado;
     setToken(t);

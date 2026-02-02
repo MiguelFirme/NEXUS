@@ -142,6 +142,17 @@ public class PendenciaService {
     }
 
     /* =========================
+       DELETE
+       ========================= */
+
+    public void delete(Integer id) {
+        if (!pendenciaRepository.existsById(id)) {
+            throw new RuntimeException("Pendência não encontrada");
+        }
+        pendenciaRepository.deleteById(id);
+    }
+
+    /* =========================
        MAPPER
        ========================= */
 
