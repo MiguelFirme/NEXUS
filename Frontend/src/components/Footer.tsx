@@ -8,7 +8,7 @@ type Props = {
 };
 
 export default function Footer({ version, author, releaseDate }: Props) {
-  const ver = version ?? (import.meta.env.VITE_APP_VERSION ?? "0.1.0");
+  const ver = version ?? (import.meta.env.VITE_APP_VERSION ?? "0.1.1");
   const auth = author ?? (import.meta.env.VITE_APP_AUTHOR ?? "Miguel Firme & Pedro Luz");
   const date = releaseDate ?? (import.meta.env.VITE_APP_RELEASE_DATE ?? new Date().toLocaleDateString());
 
