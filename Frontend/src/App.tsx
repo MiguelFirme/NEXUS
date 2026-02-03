@@ -15,6 +15,7 @@ import ActionsPanel from "./components/ActionsPanel";
 import NewPendenciaModal from "./components/NewPendenciaModal";
 import EditPendenciaModal from "./components/EditPendenciaModal";
 import UpdateSituacaoModal from "./components/UpdateSituacaoModal";
+import TransferPendenciaModal from "./components/TransferPendenciaModal";
 import { getPendencias, deletePendencia } from "./services/api";
 import type { Pendencia } from "./types";
 import Login from "./components/Login";
@@ -28,6 +29,7 @@ export default function App() {
   const [openNew, setOpenNew] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openSituacao, setOpenSituacao] = useState(false);
+  const [openTransfer, setOpenTransfer] = useState(false);
   const [snackbar, setSnackbar] = useState<{ message: string; severity: "success" | "error" | "info" } | null>(null);
 
   const fetch = async () => {
@@ -181,7 +183,7 @@ export default function App() {
                   onRefresh={fetch}
                   onEdit={() => setOpenEdit(true)}
                   onUpdateSituacao={() => setOpenSituacao(true)}
-                  onTransferir={() => showSnackbar("Transferir: funcionalidade em breve.", "info")}
+                  onTransferir={() => setOpenTransfer(true)}
                   selected={selected}
                     canCreate={!!usuario && (usuario.nivelUsuario ?? 0) > 2}
                     canDelete={!!usuario && (usuario.nivelUsuario ?? 0) >= 3}
@@ -214,7 +216,10 @@ export default function App() {
               <Typography variant="subtitle1" fontWeight={600} color="text.primary" sx={{ mb: 2 }}>
                 Detalhes
               </Typography>
-              <PendenciaDetails pendencia={selected} />
+              <PendenciaDetails
+                pendencia={selected}
+                onAtribuir={() => setOpenTransfer(true)}
+              />
             </Paper>
           </Grid>
         </Grid>
@@ -243,6 +248,16 @@ export default function App() {
         onSaved={() => {
           fetch();
           showSnackbar("Situação atualizada.", "success");
+        }}
+      />
+
+      <TransferPendenciaModal
+        open={openTransfer}
+        onClose={() => setOpenTransfer(false)}
+        pendencia={selected}
+        onSaved={() => {
+          fetch();
+          showSnackbar("Pendência transferida.", "success");
         }}
       />
 

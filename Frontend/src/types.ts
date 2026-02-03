@@ -41,6 +41,13 @@ export type PatchPendenciaPayload = Partial<{
   prazoResposta: number;
   observacoes: string;
   versao: string;
+  /** Transferência / atribuição */
+  idSetor: number;
+  /**
+   * Usuário responsável.
+   * Convenção: enviar 0 para remover atribuição (idUsuario = null no backend).
+   */
+  idUsuario: number;
 }>;
 
 /** Tipo usado na UI: mapeado do DTO para exibição */

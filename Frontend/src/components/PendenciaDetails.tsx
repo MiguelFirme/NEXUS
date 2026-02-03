@@ -13,8 +13,9 @@ import IconButton from "@mui/material/IconButton";
 import UploadFileRounded from "@mui/icons-material/UploadFileRounded";
 import Image from "@mui/material/CardMedia";
 import { useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
 
-type Props = { pendencia: Pendencia | null };
+type Props = { pendencia: Pendencia | null; onAtribuir?: () => void };
 
 function StatusChip({ situacao }: { situacao?: string }) {
   if (!situacao) return null;
@@ -191,10 +192,11 @@ function HistoricoContent({ historico }: { historico?: unknown }) {
   return <Typography variant="body2">{String(historico)}</Typography>;
 }
 
-export default function PendenciaDetails({ pendencia }: Props) {
+export default function PendenciaDetails({ pendencia, onAtribuir }: Props) {
   const [tab, setTab] = useState(0);
   const [anexos, setAnexos] = useState<{ filename: string; url: string }[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const { usuario } = useAuth();
 
   useEffect(() => {
     if (!pendencia) return;
@@ -246,10 +248,31 @@ export default function PendenciaDetails({ pendencia }: Props) {
           <DetailRow label="Origem" value={pendencia.origem} />
           <DetailRow label="Versão" value={pendencia.versao} />
           {(pendencia.idUsuario != null || pendencia.idSetor != null) && (
-            <DetailRow
-              label="Usuário / Setor"
-              value={[pendencia.idUsuario != null ? `Usuário #${pendencia.idUsuario}` : null, pendencia.idSetor != null ? `Setor #${pendencia.idSetor}` : null].filter(Boolean).join(" · ")}
-            />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 1 }}>
+              <DetailRow
+                label="Usuário / Setor"
+                value={[
+                  pendencia.idUsuario != null ? `Usuário #${pendencia.idUsuario}` : null,
+                  pendencia.idSetor != null ? `Setor #${pendencia.idSetor}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              />
+              {/* Botão \"Atribuir\" quando a pendência está apenas no setor */}
+              {usuario &&
+                pendencia.idSetor != null &&
+                pendencia.idUsuario == null &&
+                usuario.idSetor === pendencia.idSetor &&
+                onAtribuir && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={onAtribuir}
+                  >
+                    Atribuir
+                  </Button>
+                )}
+            </Box>
           )}
 
           {pendencia.descricao && (

@@ -14,6 +14,17 @@ public class PatchPendenciaDTO {
     private String observacoes;
     private String versao;
 
+    /**
+     * Transferência / atribuição:
+     * - idSetor: setor responsável pela pendência
+     * - idUsuario: usuário responsável. Quando enviado como 0 (zero), será interpretado como "remover atribuição"
+     *   e o campo idUsuario será definido como null na entidade.
+     *
+     * Ambos são opcionais no PATCH.
+     */
+    private Integer idSetor;
+    private Integer idUsuario;
+
     // JSONB
     private JsonNode cliente;
     private JsonNode propostasVinculadas;

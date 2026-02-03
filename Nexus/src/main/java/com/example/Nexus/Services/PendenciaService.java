@@ -131,6 +131,19 @@ public class PendenciaService {
         if (dto.getObservacoes() != null) p.setObservacoes(dto.getObservacoes());
         if (dto.getVersao() != null) p.setVersao(dto.getVersao());
 
+        // Transferência / atribuição
+        if (dto.getIdSetor() != null) {
+            p.setIdSetor(dto.getIdSetor());
+        }
+        if (dto.getIdUsuario() != null) {
+            // Convenção: idUsuario == 0 → remover atribuição (setar null)
+            if (dto.getIdUsuario() == 0) {
+                p.setIdUsuario(null);
+            } else {
+                p.setIdUsuario(dto.getIdUsuario());
+            }
+        }
+
         // JSONB
         if (dto.getCliente() != null) p.setCliente(dto.getCliente());
         if (dto.getPropostasVinculadas() != null) p.setPropostasVinculadas(dto.getPropostasVinculadas());

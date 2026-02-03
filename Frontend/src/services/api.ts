@@ -85,6 +85,15 @@ export async function updatePendencia(id: number, payload: PatchPendenciaPayload
   return res.data;
 }
 
+/** Transferência / atribuição de pendência (atalho para PATCH com idSetor/idUsuario) */
+export async function transferirPendencia(
+  id: number,
+  payload: Pick<PatchPendenciaPayload, "idSetor" | "idUsuario">
+): Promise<PendenciaDTO> {
+  const res = await api.patch<PendenciaDTO>(`/pendencias/${id}`, payload);
+  return res.data;
+}
+
 /** Anexos: upload and list */
 export async function uploadAnexo(pendenciaId: number, file: File): Promise<{ filename: string; url: string }> {
   const fd = new FormData();
