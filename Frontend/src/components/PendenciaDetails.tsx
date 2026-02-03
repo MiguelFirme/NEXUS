@@ -52,6 +52,12 @@ const HISTORICO_LABELS: Record<string, string> = {
   situacaoAnterior: "Situação anterior",
   observacao: "Observação",
   observacoes: "Observações",
+  idSetor: "Id Setor",
+  idSetorAnterior: "Id Setor anterior",
+  idUsuario: "Id Usuário",
+  idUsuarioAnterior: "Id Usuário anterior",
+  status: "Status",
+  statusAnterior: "Status anterior",
 };
 
 function formatHistoricoKey(key: string): string {
