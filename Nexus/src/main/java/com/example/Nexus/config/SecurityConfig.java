@@ -52,6 +52,9 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        // Download de anexos é feito via <a href>, sem header Authorization.
+                        // Mantém pendências protegidas, mas libera acesso direto aos arquivos.
+                        .requestMatchers("/anexos/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
