@@ -75,7 +75,7 @@ export default function Header() {
           ) : null}
         </Box>
       </Toolbar>
-      <UsersModal open={openUsers} onClose={() => setOpenUsers(false)} />
+      <UsersModal open={openUsers} onClose={() => setOpenUsers(false)} currentUserLevel={usuario?.nivelUsuario} />
     </AppBar>
   );
 }

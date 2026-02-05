@@ -73,4 +73,15 @@ public class UsuarioController {
         return usuarioService.buscarPorEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
     }
+
+    @PostMapping
+    public ResponseEntity<?> criar(@RequestBody UsuarioDTO dto, Authentication authentication) {
+        CurrentUser current = (CurrentUser) authentication.getPrincipal();
+        UsuarioDTO atual = usuarioService.buscarPorId(current.getId());
+        if (atual.getNivelUsuario() == null || atual.getNivelUsuario() != 4) {
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+        if (dto.getId() == null) return ResponseEntity.badRequest().body(Map.of("message", "Código do usuário é obrigatório"));
+        return ResponseEntity.ok(usuarioService.criar(dto));
+    }
 }
