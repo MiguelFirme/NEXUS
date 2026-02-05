@@ -64,6 +64,20 @@ public class UsuarioService {
                 .collect(Collectors.toList());
     }
 
+    public UsuarioDTO criar(UsuarioDTO dto) {
+        Usuario u = new Usuario();
+        u.setId(dto.getId());
+        u.setNomeUsuario(dto.getNomeUsuario());
+        u.setTelefoneUsuario(dto.getTelefoneUsuario());
+        u.setEmailUsuario(dto.getEmailUsuario());
+        u.setComputadorUsuario(dto.getComputadorUsuario());
+        u.setCargoUsuario(dto.getCargoUsuario());
+        u.setNivelUsuario(dto.getNivelUsuario() != null ? dto.getNivelUsuario() : 1);
+        u.setIdSetor(dto.getIdSetor());
+        // A senha inicial será nula, o usuário deve definir no primeiro acesso via /auth/definir-senha
+        return toDTO(usuarioRepository.save(u));
+    }
+
     private UsuarioDTO toDTO(Usuario usuario) {
         UsuarioDTO dto = new UsuarioDTO();
         dto.setId(usuario.getId());

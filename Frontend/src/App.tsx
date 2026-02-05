@@ -115,9 +115,16 @@ export default function App() {
 
   useEffect(() => {
     // apenas busca pendências quando o auth estiver pronto e houver token
-    if (!isReady) return;
-    if (!token) return;
+    if (!isReady || !token) return;
+
     fetch();
+
+    // Refresh automático a cada 5 segundos
+    const interval = setInterval(() => {
+      fetch();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, [isReady, token]);
 
   if (isReady && !token) {

@@ -143,3 +143,8 @@ export async function atualizarSenhaUsuario(id: number, novaSenha: string): Prom
   const res = await api.patch(`/usuarios/${id}/senha`, { novaSenha });
   return res.data;
 }
+
+export async function criarUsuario(payload: any): Promise<any> {
+  const res = await api.post("/usuarios", payload);
+  return res.data;
+}
