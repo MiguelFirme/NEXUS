@@ -66,8 +66,9 @@ function toPendencia(dto: PendenciaDTO): Pendencia {
   };
 }
 
-export async function getPendencias(): Promise<Pendencia[]> {
-  const res = await api.get<PendenciaDTO[]>("/pendencias");
+export async function getPendencias(usuarioId?: number): Promise<Pendencia[]> {
+  const params = usuarioId != null ? { params: { usuarioId } } : {};
+  const res = await api.get<PendenciaDTO[]>("/pendencias", params);
   return (res.data ?? []).map(toPendencia);
 }
 

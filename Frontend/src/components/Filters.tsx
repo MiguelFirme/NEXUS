@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
@@ -6,21 +6,42 @@ import Button from "@mui/material/Button";
 import FilterListRounded from "@mui/icons-material/FilterListRounded";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import { getUsuarios } from "../services/api";
 
 type Props = {
   onApply?: (filters?: unknown) => void;
+  /** Se true, mostra o filtro de usuário (apenas para nível 4+) */
+  showUsuarioFilter?: boolean;
 };
 
-export default function Filters({ onApply }: Props) {
+export default function Filters({ onApply, showUsuarioFilter = false }: Props) {
   const [periodStart, setPeriodStart] = useState<string>("");
   const [periodEnd, setPeriodEnd] = useState<string>("");
   const [status, setStatus] = useState<string>("Todas");
   const [prioridade, setPrioridade] = useState<string>("Todas");
   const [statusExcept, setStatusExcept] = useState<boolean>(false);
   const [prioridadeExcept, setPrioridadeExcept] = useState<boolean>(false);
+  const [usuarioId, setUsuarioId] = useState<number | "">("");
+  const [usuarios, setUsuarios] = useState<{ id: number; nomeUsuario?: string }[]>([]);
+
+  useEffect(() => {
+    if (showUsuarioFilter) {
+      getUsuarios()
+        .then(setUsuarios)
+        .catch(() => setUsuarios([]));
+    }
+  }, [showUsuarioFilter]);
 
   const apply = () => {
-    onApply?.({ periodStart, periodEnd, status, statusExcept, prioridade, prioridadeExcept });
+    onApply?.({ 
+      periodStart, 
+      periodEnd, 
+      status, 
+      statusExcept, 
+      prioridade, 
+      prioridadeExcept,
+      usuarioId: usuarioId === "" ? undefined : usuarioId 
+    });
   };
 
   return (
@@ -86,6 +107,24 @@ export default function Filters({ onApply }: Props) {
         label="Exceto"
         sx={{ ml: 0 }}
       />
+
+      {showUsuarioFilter && (
+        <TextField
+          select
+          label="Ver pendências de usuário"
+          size="small"
+          value={usuarioId}
+          onChange={(e) => setUsuarioId(e.target.value === "" ? "" : Number(e.target.value))}
+          sx={{ minWidth: 220 }}
+        >
+          <MenuItem value="">Todos os usuários</MenuItem>
+          {usuarios.map((u) => (
+            <MenuItem key={u.id} value={u.id}>
+              {u.nomeUsuario ?? `Usuário #${u.id}`}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
 
       <Box sx={{ flex: 1 }} />
 

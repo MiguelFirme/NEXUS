@@ -26,10 +26,24 @@ public class PendenciaController {
 
     /**
      * Lista pendências conforme o usuário logado: por setor (se tiver) ou por usuário.
+     * Usuários nível 4+ podem usar o parâmetro ?usuarioId= para ver pendências de outro usuário.
      */
     @GetMapping
-    public List<PendenciaDTO> listarTodas(Authentication authentication) {
+    public List<PendenciaDTO> listarTodas(
+            Authentication authentication,
+            @RequestParam(required = false) Integer usuarioId
+    ) {
         CurrentUser user = (CurrentUser) authentication.getPrincipal();
+        
+        // Se usuário nível 4+ especificou um usuarioId, lista pendências daquele usuário
+        if (usuarioId != null) {
+            var atual = usuarioService.buscarPorId(user.getId());
+            if (atual.getNivelUsuario() != null && atual.getNivelUsuario() >= 4) {
+                return pendenciaService.listarPorUsuario(usuarioId);
+            }
+        }
+        
+        // Comportamento padrão: lista pendências do próprio usuário/setor
         return pendenciaService.listarParaUsuario(user.getId(), user.getIdSetor());
     }
 

@@ -53,13 +53,28 @@ public class PendenciaService {
     }
 
     /**
-     * Lista pendências visíveis para o usuário: por setor (se tiver setor) ou por usuário.
+     * Lista pendências visíveis para o usuário:
+     * - Se a pendência tiver um usuário atribuído (idUsuario != null), apenas esse usuário vê.
+     * - Se não tiver usuário atribuído (idUsuario == null) mas tiver setor, todos do setor veem.
      */
     public List<PendenciaDTO> listarParaUsuario(Integer idUsuario, Integer idSetor) {
-        if (idSetor != null) {
-            return listarPorSetor(idSetor);
-        }
-        return listarPorUsuario(idUsuario);
+        List<Pendencia> todas = pendenciaRepository.findAll();
+
+        return todas.stream()
+                .filter(p -> {
+                    // Se tem usuário atribuído, só ele enxerga
+                    if (p.getIdUsuario() != null) {
+                        return p.getIdUsuario().equals(idUsuario);
+                    }
+                    // Senão, visibilidade por setor (se tiver setor e usuário tiver setor)
+                    if (p.getIdSetor() != null && idSetor != null) {
+                        return p.getIdSetor().equals(idSetor);
+                    }
+                    // Caso sem setor definido: opcionalmente podemos torná-la visível só ao criador/usuario
+                    return false;
+                })
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /* =========================

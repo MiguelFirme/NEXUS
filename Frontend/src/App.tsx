@@ -30,11 +30,16 @@ export default function App() {
   const [openEdit, setOpenEdit] = useState(false);
   const [openSituacao, setOpenSituacao] = useState(false);
   const [openTransfer, setOpenTransfer] = useState(false);
+  const [transferConfig, setTransferConfig] = useState<{ mode: "transfer" | "atribuir"; fixedSetorId: number | null }>({
+    mode: "transfer",
+    fixedSetorId: null,
+  });
   const [snackbar, setSnackbar] = useState<{ message: string; severity: "success" | "error" | "info" } | null>(null);
+  const [filtroUsuarioId, setFiltroUsuarioId] = useState<number | undefined>(undefined);
 
-  const fetch = async () => {
+  const fetch = async (usuarioId?: number) => {
     try {
-      const data = await getPendencias();
+      const data = await getPendencias(usuarioId);
       setPendenciasRaw(data);
       setPendencias(processPendencias(data));
     } catch (err) {
@@ -44,7 +49,16 @@ export default function App() {
     }
   };
 
-  const applyFilters = (filters?: { periodStart?: string; periodEnd?: string; status?: string; prioridade?: string }) => {
+  const applyFilters = async (filters?: { periodStart?: string; periodEnd?: string; status?: string; prioridade?: string; usuarioId?: number }) => {
+    // Se o filtro de usuário mudou, precisa buscar novamente da API
+    const novoUsuarioId = filters?.usuarioId;
+    if (novoUsuarioId !== filtroUsuarioId) {
+      setFiltroUsuarioId(novoUsuarioId);
+      // Busca pendências do usuário selecionado (ou todas se undefined)
+      await fetch(novoUsuarioId);
+      // Continua aplicando os outros filtros locais abaixo
+    }
+
     if (!filters) {
       setPendencias(processPendencias(pendenciasRaw));
       return;
@@ -152,7 +166,10 @@ export default function App() {
           <Typography variant="subtitle1" fontWeight={600} color="text.primary" sx={{ mb: 2 }}>
             Filtros
           </Typography>
-          <Filters onApply={applyFilters} />
+          <Filters 
+            onApply={applyFilters} 
+            showUsuarioFilter={!!usuario && (usuario.nivelUsuario ?? 0) >= 4}
+          />
         </Paper>
 
         <Grid container spacing={3}>
@@ -180,10 +197,13 @@ export default function App() {
               <Box sx={{ mt: 2 }}>
                 <ActionsPanel
                   onNew={() => setOpenNew(true)}
-                  onRefresh={fetch}
+                  onRefresh={() => fetch(filtroUsuarioId)}
                   onEdit={() => setOpenEdit(true)}
                   onUpdateSituacao={() => setOpenSituacao(true)}
-                  onTransferir={() => setOpenTransfer(true)}
+                  onTransferir={() => {
+                    setTransferConfig({ mode: "transfer", fixedSetorId: null });
+                    setOpenTransfer(true);
+                  }}
                   selected={selected}
                     canCreate={!!usuario && (usuario.nivelUsuario ?? 0) > 2}
                     canDelete={!!usuario && (usuario.nivelUsuario ?? 0) >= 3}
@@ -218,7 +238,11 @@ export default function App() {
               </Typography>
               <PendenciaDetails
                 pendencia={selected}
-                onAtribuir={() => setOpenTransfer(true)}
+                onAtribuir={() => {
+                  if (!selected) return;
+                  setTransferConfig({ mode: "atribuir", fixedSetorId: selected.idSetor ?? null });
+                  setOpenTransfer(true);
+                }}
               />
             </Paper>
           </Grid>
@@ -255,6 +279,8 @@ export default function App() {
         open={openTransfer}
         onClose={() => setOpenTransfer(false)}
         pendencia={selected}
+        initialMode={transferConfig.mode === "atribuir" ? "usuario" : "setor"}
+        fixedSetorId={transferConfig.mode === "atribuir" ? transferConfig.fixedSetorId : null}
         onSaved={() => {
           fetch();
           showSnackbar("Pendência transferida.", "success");

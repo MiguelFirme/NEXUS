@@ -53,8 +53,13 @@ export default function TransferPendenciaModal({
       .catch(() => setUsuarios([]));
 
     // Define estado inicial
-    setMode(initialMode);
     const baseSetor = fixedSetorId ?? pendencia?.idSetor ?? null;
+    // Se há setor fixo (fluxo "Atribuir"), força modo usuário
+    if (fixedSetorId != null) {
+      setMode("usuario");
+    } else {
+      setMode(initialMode);
+    }
     setSetorId(baseSetor ?? "");
     setUsuarioId(pendencia?.idUsuario ?? "");
   }, [open, pendencia, initialMode, fixedSetorId]);
@@ -91,6 +96,11 @@ export default function TransferPendenciaModal({
   const effectiveSetores =
     fixedSetorId != null ? setores.filter((s) => s.id === fixedSetorId) : setores;
 
+  const effectiveUsuarios =
+    fixedSetorId != null
+      ? usuarios.filter((u) => u.idSetor === fixedSetorId)
+      : usuarios;
+
   const canConfirm =
     pendencia &&
     ((mode === "setor" && setorId !== "" && setorId != null) ||
@@ -98,7 +108,7 @@ export default function TransferPendenciaModal({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Transferir pendência</DialogTitle>
+      <DialogTitle>{fixedSetorId != null ? "Atribuir pendência" : "Transferir pendência"}</DialogTitle>
       <DialogContent>
         {!pendencia ? (
           <Typography variant="body2" color="text.secondary">
@@ -106,22 +116,30 @@ export default function TransferPendenciaModal({
           </Typography>
         ) : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Escolha se deseja transferir a pendência para um <strong>setor</strong> (todos do setor verão e poderão
-              atribuir) ou diretamente para um <strong>usuário específico</strong>.
-            </Typography>
+            {fixedSetorId == null ? (
+              <>
+                <Typography variant="body2" color="text.secondary">
+                  Escolha se deseja transferir a pendência para um <strong>setor</strong> (todos do setor verão e poderão
+                  atribuir) ou diretamente para um <strong>usuário específico</strong>.
+                </Typography>
 
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Destino</FormLabel>
-              <RadioGroup
-                row
-                value={mode}
-                onChange={(e) => setMode(e.target.value as "setor" | "usuario")}
-              >
-                <FormControlLabel value="setor" control={<Radio />} label="Setor" />
-                <FormControlLabel value="usuario" control={<Radio />} label="Usuário específico" />
-              </RadioGroup>
-            </FormControl>
+                <FormControl component="fieldset">
+                  <FormLabel component="legend">Destino</FormLabel>
+                  <RadioGroup
+                    row
+                    value={mode}
+                    onChange={(e) => setMode(e.target.value as "setor" | "usuario")}
+                  >
+                    <FormControlLabel value="setor" control={<Radio />} label="Setor" />
+                    <FormControlLabel value="usuario" control={<Radio />} label="Usuário específico" />
+                  </RadioGroup>
+                </FormControl>
+              </>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Atribua esta pendência a um <strong>usuário</strong> do setor selecionado.
+              </Typography>
+            )}
 
             {mode === "setor" && (
               <TextField
@@ -150,7 +168,7 @@ export default function TransferPendenciaModal({
                 onChange={(e) => setUsuarioId(e.target.value === "" ? "" : Number(e.target.value))}
                 fullWidth
               >
-                {usuarios.map((u) => (
+                {effectiveUsuarios.map((u) => (
                   <MenuItem key={u.id} value={u.id}>
                     {u.nomeUsuario ?? `Usuário #${u.id}`}{" "}
                     {u.idSetor != null ? ` (Setor ${u.idSetor})` : ""}
