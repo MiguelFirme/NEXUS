@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
@@ -7,12 +7,11 @@ import Tab from "@mui/material/Tab";
 import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 import type { Pendencia } from "../types";
-import { uploadAnexo, getAnexos } from "../services/api";
+import { uploadAnexo, getAnexos, getSetores, getUsuarios } from "../services/api";
 import Link from "@mui/material/Link";
 import IconButton from "@mui/material/IconButton";
 import UploadFileRounded from "@mui/icons-material/UploadFileRounded";
 import Image from "@mui/material/CardMedia";
-import { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
 type Props = { pendencia: Pendencia | null; onAtribuir?: () => void };
@@ -52,10 +51,10 @@ const HISTORICO_LABELS: Record<string, string> = {
   situacaoAnterior: "Situação anterior",
   observacao: "Observação",
   observacoes: "Observações",
-  idSetor: "Id Setor",
-  idSetorAnterior: "Id Setor anterior",
-  idUsuario: "Id Usuário",
-  idUsuarioAnterior: "Id Usuário anterior",
+  idSetor: "Setor",
+  idSetorAnterior: "Setor anterior",
+  idUsuario: "Usuário",
+  idUsuarioAnterior: "Usuário anterior",
   status: "Status",
   statusAnterior: "Status anterior",
 };
@@ -64,8 +63,29 @@ function formatHistoricoKey(key: string): string {
   return HISTORICO_LABELS[key] ?? key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
 }
 
-function formatHistoricoValue(value: unknown): string {
+function formatHistoricoValue(
+  value: unknown,
+  key: string,
+  setoresMap?: Map<number, string>,
+  usuariosMap?: Map<number, string>
+): string {
   if (value == null) return "—";
+  
+  // Formata IDs de setor e usuário com nomes
+  if (key === "idSetor" || key === "idSetorAnterior") {
+    if (typeof value === "number" && setoresMap?.has(value)) {
+      return `${setoresMap.get(value)} (Setor #${value})`;
+    }
+    return typeof value === "number" ? `Setor #${value}` : String(value);
+  }
+  
+  if (key === "idUsuario" || key === "idUsuarioAnterior") {
+    if (typeof value === "number" && usuariosMap?.has(value)) {
+      return `${usuariosMap.get(value)} (Usuário #${value})`;
+    }
+    return typeof value === "number" ? `Usuário #${value}` : String(value);
+  }
+  
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
     try {
       return new Date(value).toLocaleString("pt-BR");
@@ -77,7 +97,17 @@ function formatHistoricoValue(value: unknown): string {
   return String(value);
 }
 
-function HistoricoEntry({ item, index }: { item: unknown; index: number }) {
+function HistoricoEntry({ 
+  item, 
+  index,
+  setoresMap,
+  usuariosMap 
+}: { 
+  item: unknown; 
+  index: number;
+  setoresMap?: Map<number, string>;
+  usuariosMap?: Map<number, string>;
+}) {
   if (item == null) return null;
   if (typeof item !== "object") {
     return (
@@ -137,7 +167,7 @@ function HistoricoEntry({ item, index }: { item: unknown; index: number }) {
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, minWidth: 120 }}>
                   {formatHistoricoKey(key)}:
                 </Typography>
-                <Typography variant="body2">{formatHistoricoValue(value)}</Typography>
+                <Typography variant="body2">{formatHistoricoValue(value, key, setoresMap, usuariosMap)}</Typography>
               </Box>
             ))}
           </Box>
@@ -147,7 +177,15 @@ function HistoricoEntry({ item, index }: { item: unknown; index: number }) {
   );
 }
 
-function HistoricoContent({ historico }: { historico?: unknown }) {
+function HistoricoContent({ 
+  historico,
+  setoresMap,
+  usuariosMap 
+}: { 
+  historico?: unknown;
+  setoresMap?: Map<number, string>;
+  usuariosMap?: Map<number, string>;
+}) {
   if (historico == null) {
     return (
       <Box sx={{ textAlign: "center", py: 3 }}>
@@ -168,7 +206,7 @@ function HistoricoContent({ historico }: { historico?: unknown }) {
         }}
       >
         {historico.map((item, i) => (
-          <HistoricoEntry key={i} item={item} index={i} />
+          <HistoricoEntry key={i} item={item} index={i} setoresMap={setoresMap} usuariosMap={usuariosMap} />
         ))}
       </Box>
     );
@@ -189,7 +227,7 @@ function HistoricoContent({ historico }: { historico?: unknown }) {
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, minWidth: 140 }}>
               {formatHistoricoKey(key)}:
             </Typography>
-            <Typography variant="body2">{formatHistoricoValue(value)}</Typography>
+            <Typography variant="body2">{formatHistoricoValue(value, key, setoresMap, usuariosMap)}</Typography>
           </Box>
         ))}
       </Box>
@@ -202,11 +240,36 @@ export default function PendenciaDetails({ pendencia, onAtribuir }: Props) {
   const [tab, setTab] = useState(0);
   const [anexos, setAnexos] = useState<{ filename: string; url: string }[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const [setores, setSetores] = useState<{ id: number; nome_setor?: string }[]>([]);
+  const [usuarios, setUsuarios] = useState<{ id: number; nomeUsuario?: string }[]>([]);
   const { usuario } = useAuth();
+
+  // Cria mapas para busca rápida de nomes por ID
+  const setoresMap = useMemo(() => {
+    const map = new Map<number, string>();
+    setores.forEach(s => {
+      if (s.id && s.nome_setor) {
+        map.set(s.id, s.nome_setor);
+      }
+    });
+    return map;
+  }, [setores]);
+
+  const usuariosMap = useMemo(() => {
+    const map = new Map<number, string>();
+    usuarios.forEach(u => {
+      if (u.id && u.nomeUsuario) {
+        map.set(u.id, u.nomeUsuario);
+      }
+    });
+    return map;
+  }, [usuarios]);
 
   useEffect(() => {
     if (!pendencia) return;
     getAnexos(pendencia.id).then(setAnexos).catch(() => setAnexos([]));
+    getSetores().then(setSetores).catch(() => setSetores([]));
+    getUsuarios().then(setUsuarios).catch(() => setUsuarios([]));
   }, [pendencia]);
 
   if (!pendencia) {
@@ -258,8 +321,16 @@ export default function PendenciaDetails({ pendencia, onAtribuir }: Props) {
               <DetailRow
                 label="Usuário / Setor"
                 value={[
-                  pendencia.idUsuario != null ? `Usuário #${pendencia.idUsuario}` : null,
-                  pendencia.idSetor != null ? `Setor #${pendencia.idSetor}` : null,
+                  pendencia.idUsuario != null 
+                    ? (usuariosMap.get(pendencia.idUsuario) 
+                        ? `${usuariosMap.get(pendencia.idUsuario)} (Usuário #${pendencia.idUsuario})`
+                        : `Usuário #${pendencia.idUsuario}`)
+                    : null,
+                  pendencia.idSetor != null 
+                    ? (setoresMap.get(pendencia.idSetor)
+                        ? `${setoresMap.get(pendencia.idSetor)} (Setor #${pendencia.idSetor})`
+                        : `Setor #${pendencia.idSetor}`)
+                    : null,
                 ]
                   .filter(Boolean)
                   .join(" · ")}
@@ -357,7 +428,7 @@ export default function PendenciaDetails({ pendencia, onAtribuir }: Props) {
       {tab === 1 && (
         <Box id="pendencia-panel-1" role="tabpanel" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
           <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
-            <HistoricoContent historico={pendencia.historico} />
+            <HistoricoContent historico={pendencia.historico} setoresMap={setoresMap} usuariosMap={usuariosMap} />
           </Paper>
         </Box>
       )}

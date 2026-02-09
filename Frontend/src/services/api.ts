@@ -54,13 +54,14 @@ api.interceptors.response.use(
 /** Converte PendenciaDTO do backend para o formato usado na UI */
 function toPendencia(dto: PendenciaDTO): Pendencia {
   const data = dto.dataCriacao ?? "";
-  const dateOnly = data.slice(0, 10);
-  const timePart = data.slice(11, 16); // HH:mm
+  // Extrai apenas a parte da data (YYYY-MM-DD) se existir
+  const dateOnly = data && data.length >= 10 ? data.slice(0, 10) : "";
+  const timePart = data && data.length >= 16 ? data.slice(11, 16) : undefined; // HH:mm
   return {
     ...dto,
     titulo: dto.numero ?? dto.equipamento ?? "Pendência",
     descricao: dto.observacoes,
-    data: dateOnly,
+    data: dateOnly || undefined,
     hora: timePart || undefined,
     situacao: dto.situacao ?? dto.status,
   };

@@ -72,10 +72,20 @@ export default function App() {
 
     // Filtrar por período
     if (filters.periodStart) {
-      filtered = filtered.filter((p) => p.data >= filters.periodStart!);
+      filtered = filtered.filter((p) => {
+        // Usa dataCriacao se data não estiver disponível
+        const dataParaComparar = p.data || (p.dataCriacao ? p.dataCriacao.slice(0, 10) : null);
+        if (!dataParaComparar) return false; // Se não tem data, não inclui no filtro
+        return dataParaComparar >= filters.periodStart!;
+      });
     }
     if (filters.periodEnd) {
-      filtered = filtered.filter((p) => p.data <= filters.periodEnd!);
+      filtered = filtered.filter((p) => {
+        // Usa dataCriacao se data não estiver disponível
+        const dataParaComparar = p.data || (p.dataCriacao ? p.dataCriacao.slice(0, 10) : null);
+        if (!dataParaComparar) return false; // Se não tem data, não inclui no filtro
+        return dataParaComparar <= filters.periodEnd!;
+      });
     }
 
     // Filtrar por status/situação
