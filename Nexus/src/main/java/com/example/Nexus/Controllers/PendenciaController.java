@@ -90,5 +90,66 @@ public class PendenciaController {
         return java.util.Map.of("message", "Pendência removida");
     }
 
+    /**
+     * Aceita uma transferência pendente.
+     * Apenas o usuário/setor que recebeu a transferência pode aceitar.
+     */
+    @PostMapping("/{id}/aceitar-transferencia")
+    public PendenciaDTO aceitarTransferencia(
+            @PathVariable Integer id,
+            Authentication authentication
+    ) {
+        CurrentUser user = (CurrentUser) authentication.getPrincipal();
+        
+        // Validação: verifica se o usuário atual pode aceitar (deve ser o destinatário)
+        PendenciaDTO pendenciaAntes = pendenciaService.buscarPorId(id);
+        
+        // Se há usuário específico atribuído, apenas esse usuário pode aceitar
+        if (pendenciaAntes.getIdUsuario() != null) {
+            if (!pendenciaAntes.getIdUsuario().equals(user.getId())) {
+                throw new RuntimeException("Você não tem permissão para aceitar esta transferência");
+            }
+        } else if (pendenciaAntes.getIdSetor() != null) {
+            // Se não há usuário específico mas há setor, qualquer usuário do setor pode aceitar
+            if (user.getIdSetor() == null || !pendenciaAntes.getIdSetor().equals(user.getIdSetor())) {
+                throw new RuntimeException("Você não tem permissão para aceitar esta transferência");
+            }
+        } else {
+            throw new RuntimeException("Esta pendência não foi transferida para nenhum setor ou usuário");
+        }
+        
+        return pendenciaService.aceitarTransferencia(id);
+    }
+
+    /**
+     * Devolve uma transferência pendente.
+     * Apenas o usuário/setor que recebeu a transferência pode devolver.
+     */
+    @PostMapping("/{id}/devolver-transferencia")
+    public PendenciaDTO devolverTransferencia(
+            @PathVariable Integer id,
+            Authentication authentication
+    ) {
+        CurrentUser user = (CurrentUser) authentication.getPrincipal();
+        
+        // Validação: verifica se o usuário atual pode devolver (deve ser o destinatário)
+        PendenciaDTO pendenciaAntes = pendenciaService.buscarPorId(id);
+        
+        // Se há usuário específico atribuído, apenas esse usuário pode devolver
+        if (pendenciaAntes.getIdUsuario() != null) {
+            if (!pendenciaAntes.getIdUsuario().equals(user.getId())) {
+                throw new RuntimeException("Você não tem permissão para devolver esta transferência");
+            }
+        } else if (pendenciaAntes.getIdSetor() != null) {
+            // Se não há usuário específico mas há setor, qualquer usuário do setor pode devolver
+            if (user.getIdSetor() == null || !pendenciaAntes.getIdSetor().equals(user.getIdSetor())) {
+                throw new RuntimeException("Você não tem permissão para devolver esta transferência");
+            }
+        } else {
+            throw new RuntimeException("Esta pendência não foi transferida para nenhum setor ou usuário");
+        }
+        
+        return pendenciaService.devolverTransferencia(id);
+    }
 
 }

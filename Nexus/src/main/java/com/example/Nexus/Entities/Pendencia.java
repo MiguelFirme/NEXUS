@@ -38,6 +38,13 @@ public class Pendencia {
     private Integer idUsuario;
     private Integer idSetor;
     private Integer idRoteiro; // Roteiro que a pendência deve seguir
+    
+    // Status da transferência: PENDENTE (aguardando aceitação), ACEITA, DEVOLVIDA, null (sem transferência pendente)
+    private String statusTransferencia;
+    
+    // Valores anteriores da transferência (usados para devolução)
+    private Integer idSetorAnterior;
+    private Integer idUsuarioAnterior;
 
     // 🔽 JSONB CORRETO
     @JdbcTypeCode(SqlTypes.JSON)

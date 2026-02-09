@@ -27,6 +27,9 @@ public class PendenciaDTO {
     private Integer idUsuario;
     private Integer idSetor;
     private Integer idRoteiro;
+    
+    /** Status da transferência: PENDENTE, ACEITA, DEVOLVIDA, ou null */
+    private String statusTransferencia;
 
     /** Histórico da pendência (JSONB). */
     private JsonNode historico;

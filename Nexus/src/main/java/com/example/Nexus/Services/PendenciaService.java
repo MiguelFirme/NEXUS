@@ -43,6 +43,12 @@ public class PendenciaService {
                 .collect(Collectors.toList());
     }
 
+    public PendenciaDTO buscarPorId(Integer id) {
+        return pendenciaRepository.findById(id)
+                .map(this::toDTO)
+                .orElseThrow(() -> new RuntimeException("Pendência não encontrada"));
+    }
+
     public List<PendenciaDTO> listarPorUsuario(Integer idUsuario) {
         return pendenciaRepository.findByIdUsuario(idUsuario)
                 .stream()
@@ -223,6 +229,9 @@ public class PendenciaService {
         if (dto.getVersao() != null) p.setVersao(dto.getVersao());
 
         // Validação de roteiro antes de transferir setor
+        boolean transferiuSetor = false;
+        boolean transferiuUsuario = false;
+        
         if (dto.getIdSetor() != null && !dto.getIdSetor().equals(idSetorAntes)) {
             // Se a pendência está em um roteiro, valida se o setor destino é válido
             if (p.getIdRoteiro() != null) {
@@ -238,14 +247,29 @@ public class PendenciaService {
                 }
             }
             p.setIdSetor(dto.getIdSetor());
+            transferiuSetor = true;
         }
         if (dto.getIdUsuario() != null) {
             // Convenção: idUsuario == 0 → remover atribuição (setar null)
             if (dto.getIdUsuario() == 0) {
                 p.setIdUsuario(null);
+                // Remover atribuição não é uma transferência pendente
             } else {
+                // Verifica se houve mudança: null -> não null, ou valores diferentes
+                boolean mudouUsuario = (idUsuarioAntes == null && dto.getIdUsuario() != null) ||
+                                       (idUsuarioAntes != null && !idUsuarioAntes.equals(dto.getIdUsuario()));
                 p.setIdUsuario(dto.getIdUsuario());
+                if (mudouUsuario) {
+                    transferiuUsuario = true;
+                }
             }
+        }
+        
+        // Se houve transferência (mudança de setor ou usuário), marca como PENDENTE e armazena valores anteriores
+        if (transferiuSetor || transferiuUsuario) {
+            p.setStatusTransferencia("PENDENTE");
+            p.setIdSetorAnterior(idSetorAntes);
+            p.setIdUsuarioAnterior(idUsuarioAntes);
         }
         if (dto.getIdRoteiro() != null) {
             p.setIdRoteiro(dto.getIdRoteiro());
@@ -301,6 +325,112 @@ public class PendenciaService {
     }
 
     /* =========================
+       ACEITAR/DEVOLVER TRANSFERÊNCIA
+       ========================= */
+
+    /**
+     * Aceita uma transferência pendente. Marca o statusTransferencia como ACEITA.
+     */
+    public PendenciaDTO aceitarTransferencia(Integer id) {
+        Pendencia p = pendenciaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pendência não encontrada"));
+        
+        if (!"PENDENTE".equals(p.getStatusTransferencia())) {
+            throw new RuntimeException("Esta pendência não está pendente de aceitação");
+        }
+        
+        String statusAnterior = p.getStatusTransferencia();
+        // Limpa o status de transferência após aceitar (transferência concluída)
+        p.setStatusTransferencia(null);
+        p.setUltimaModificacao(LocalDateTime.now());
+        
+        // Limpa os campos de valores anteriores após aceitar
+        p.setIdSetorAnterior(null);
+        p.setIdUsuarioAnterior(null);
+        
+        // Registra no histórico
+        String acao = "Aceitação de transferência";
+        String descricao = "Transferência aceita pelo recebedor";
+        
+        JsonNode historicoAtualizado = adicionarEntradaHistorico(
+                p.getHistorico(),
+                acao,
+                null,
+                null,
+                null,
+                null,
+                null,
+                p.getIdUsuario(),
+                null,
+                p.getIdSetor(),
+                null,
+                descricao
+        );
+        p.setHistorico(historicoAtualizado);
+        
+        return toDTO(pendenciaRepository.save(p));
+    }
+
+    /**
+     * Devolve uma transferência pendente. Reverte para o setor/usuário anterior e marca como DEVOLVIDA.
+     */
+    public PendenciaDTO devolverTransferencia(Integer id) {
+        Pendencia p = pendenciaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pendência não encontrada"));
+        
+        if (!"PENDENTE".equals(p.getStatusTransferencia())) {
+            throw new RuntimeException("Esta pendência não está pendente de aceitação");
+        }
+        
+        // Valores antes da devolução
+        Integer idSetorAtual = p.getIdSetor();
+        Integer idUsuarioAtual = p.getIdUsuario();
+        
+        // Valores anteriores armazenados
+        Integer idSetorAnterior = p.getIdSetorAnterior();
+        Integer idUsuarioAnterior = p.getIdUsuarioAnterior();
+        
+        // Reverte para valores anteriores
+        p.setIdSetor(idSetorAnterior);
+        p.setIdUsuario(idUsuarioAnterior);
+        p.setStatusTransferencia("DEVOLVIDA");
+        p.setUltimaModificacao(LocalDateTime.now());
+        
+        // Limpa os campos de valores anteriores
+        p.setIdSetorAnterior(null);
+        p.setIdUsuarioAnterior(null);
+        
+        // Registra no histórico
+        String acao = "Devolução de transferência";
+        StringBuilder descricao = new StringBuilder("Transferência devolvida. ");
+        
+        if (idSetorAtual != null && !idSetorAtual.equals(idSetorAnterior)) {
+            descricao.append("Setor: ").append(idSetorAtual).append(" → ").append(idSetorAnterior == null ? "—" : idSetorAnterior).append(". ");
+        }
+        if (idUsuarioAtual != null && !idUsuarioAtual.equals(idUsuarioAnterior)) {
+            descricao.append("Usuário: ").append(idUsuarioAtual).append(" → ").append(idUsuarioAnterior == null ? "—" : idUsuarioAnterior).append(". ");
+        }
+        
+        JsonNode historicoAtualizado = adicionarEntradaHistorico(
+                p.getHistorico(),
+                acao,
+                null,
+                null,
+                null,
+                null,
+                idUsuarioAtual,
+                idUsuarioAnterior,
+                idSetorAtual,
+                idSetorAnterior,
+                null,
+                descricao.toString().trim()
+        );
+        p.setHistorico(historicoAtualizado);
+        
+        return toDTO(pendenciaRepository.save(p));
+    }
+
+    /* =========================
        DELETE
        ========================= */
 
@@ -333,6 +463,7 @@ public class PendenciaService {
         dto.setIdUsuario(p.getIdUsuario());
         dto.setIdSetor(p.getIdSetor());
         dto.setIdRoteiro(p.getIdRoteiro());
+        dto.setStatusTransferencia(p.getStatusTransferencia());
         dto.setHistorico(p.getHistorico());
 
         return dto;
