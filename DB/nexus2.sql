@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict xNThddurgl3bWhw4jEMNn4GDYwx4fc3ZgVmETEoO3HenbJ3CDKxdA5RjPg83jvX
+\restrict D3q5qbIkhkqvBJMLvJinGeFEv9O0aJJ7K2yJkuADE0uTgnX9FTKnFCdcfmAD4zY
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
 
--- Started on 2026-02-08 22:24:14
+-- Started on 2026-02-08 22:32:31
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -395,16 +395,16 @@ COPY nexus.setores (id_setor, nome_setor) FROM stdin;
 --
 
 COPY nexus.usuarios (codigo_usuario, nome_usuario, telefone_usuario, email_usuario, computador_usuario, cargo_usuario, nivel_usuario, id_setor, senha) FROM stdin;
-4	Lucas Bava	+554896718572	projetos2@olivo.ind.br	DESKTOP-QBCIUNQ	ENGENHEIRO	3	1	$2a$10$m3pNj.UNhFIO2Uwg4RiGIejJM.29aqsWRsdcceofVkGXz4nCUpU.K
-3	Pedro Luz	+554896870346	projetos14@olivo.ind.br	DESKTOP-TC5VAN1	DEVELOPER	4	3	$2a$10$k2UJDWZeUh8R4hjkFj6v2eXJMjvkfLcnoeeHXQdSIpVE7jRsKBrLO
-1	Thalita Costa	+554898430122	vendas06@olivoguindastes.com.br	VENDINTERNA03	VENDEDOR	1	2	$2a$10$AJJmY3u90vR1ry8z.2P11umWrezgwREd7qFcuQRG8Wz1Jrs6.k4Gy
-5	Sabino	+554899290029	engenharia08@olivoimplementos.com.br	\N	ENGENHEIRO	3	1	$2a$10$aw3o5FnXZke4dTvCZJ.aiOj3mF6y4khSYwSV/YEV7daUupOcDZQYS
-2	Ricardo Feltrin	+554896006593	supervisao01@olivoguindastes.com.br	DESKTOP-M81U9SG	VENDEDOR	1	2	$2a$10$sQ2miwq1X2D8bML03qjKQ.hksmqhyCZJvBo2Iy5/joCwU6GkNGWL2
-7	Dimitri	+554896989630	\N	\N	LIDER	3	4	\N
-8	Leanderson	+554891817184	ger.custos@olivoimplementos.com.br	\N	GERENTE	3	5	\N
-9	Fabiano	+554884528863	\N	\N	ENGENHEIRO	3	1	\N
 6	Miguel Firme	+554898036211	projetos13@olivo.ind.br	MIGUELFIRME	DEVELOPER	4	3	$2a$10$ByZsWkEucvJUMNX3fJVNTefsFWTkXLb3m8g3RpRhwfrNhaHNN3T3K
-10	Leonardo Bettiol				ENGENHEIRO	2	1	\N
+4	Lucas Bava	+554896718572	projetos2@olivo.ind.br	DESKTOP-QBCIUNQ	ENGENHEIRO	3	1	$2a$10$9tSmsTD.3AgvgNLXmhZxxucdqSG4bXgpvIY5MOz09LOu.1YazMp0e
+3	Pedro Luz	+554896870346	projetos14@olivo.ind.br	DESKTOP-TC5VAN1	DEVELOPER	4	3	$2a$10$iXqn9JTxqQWuBwoHpngIFOnR9VKiPqXITg.2TaL9DO4J3KVFttxQ6
+1	Thalita Costa	+554898430122	vendas06@olivoguindastes.com.br	VENDINTERNA03	VENDEDOR	1	2	$2a$10$6CEqRUgOspMIHZjE2aiVGOCZ/IVDjH3VoNnxh5G7vXWqJOafDKR6e
+5	Sabino	+554899290029	engenharia08@olivoimplementos.com.br	\N	ENGENHEIRO	3	1	$2a$10$QrikP132BcT/NB.SXQL2VudCQ69pk7zt2O01mzD96ZmlsSWk5hMci
+2	Ricardo Feltrin	+554896006593	supervisao01@olivoguindastes.com.br	DESKTOP-M81U9SG	VENDEDOR	1	2	$2a$10$.ht0vJCKWeyWSTMs4joLB.0dAQusyD666IHefphe7NgBY3h7RJWJ.
+7	Dimitri	+554896989630	\N	\N	LIDER	3	4	$2a$10$N0OBrUF889BrZn9hw5BDGunGYZ75xJech/91fSooKHwHPosMzhPYq
+8	Leanderson	+554891817184	ger.custos@olivoimplementos.com.br	\N	GERENTE	3	5	$2a$10$//br44DD5tgXCNcKMmdTiu0e5qjmWvcpf.wa4qwZ9UMUJa496Vfr.
+9	Fabiano	+554884528863	\N	\N	ENGENHEIRO	3	1	$2a$10$N1afcewRLSqQfoeck5..o.rFzerGBrfaKVF8bGJekV1.szaNuDyNa
+10	Leonardo Bettiol				ENGENHEIRO	2	1	$2a$10$DV/zLXw1NQoFJc6iL2KVEOfpfVJ.iMiBysVIAtJHzrmsz3XreUFhS
 \.
 
 
@@ -594,11 +594,11 @@ ALTER TABLE ONLY nexus.roteiro_setores
     ADD CONSTRAINT roteiro_setores_roteiro_id_fkey FOREIGN KEY (roteiro_id) REFERENCES nexus.roteiros(id) ON DELETE CASCADE;
 
 
--- Completed on 2026-02-08 22:24:14
+-- Completed on 2026-02-08 22:32:31
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict xNThddurgl3bWhw4jEMNn4GDYwx4fc3ZgVmETEoO3HenbJ3CDKxdA5RjPg83jvX
+\unrestrict D3q5qbIkhkqvBJMLvJinGeFEv9O0aJJ7K2yJkuADE0uTgnX9FTKnFCdcfmAD4zY
 
