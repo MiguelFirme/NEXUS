@@ -204,3 +204,15 @@ export async function atualizarRoteiro(id: number, payload: CreateRoteiroDTO): P
 export async function deletarRoteiro(id: number): Promise<void> {
   await api.delete(`/roteiros/${id}`);
 }
+
+/** Aceita uma transferência pendente */
+export async function aceitarTransferencia(id: number): Promise<PendenciaDTO> {
+  const res = await api.post<PendenciaDTO>(`/pendencias/${id}/aceitar-transferencia`);
+  return res.data;
+}
+
+/** Devolve uma transferência pendente */
+export async function devolverTransferencia(id: number): Promise<PendenciaDTO> {
+  const res = await api.post<PendenciaDTO>(`/pendencias/${id}/devolver-transferencia`);
+  return res.data;
+}

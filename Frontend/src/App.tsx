@@ -264,6 +264,15 @@ export default function App() {
                   setTransferConfig({ mode: "atribuir", fixedSetorId: selected.idSetor ?? null });
                   setOpenTransfer(true);
                 }}
+                onSaved={async () => {
+                  await fetch(filtroUsuarioId);
+                  // Atualiza a pendência selecionada
+                  if (selected) {
+                    const updated = await getPendencias(filtroUsuarioId);
+                    const found = updated.find(p => p.id === selected.id);
+                    if (found) setSelected(found);
+                  }
+                }}
               />
             </Paper>
           </Grid>

@@ -7,14 +7,14 @@ import Tab from "@mui/material/Tab";
 import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 import type { Pendencia } from "../types";
-import { uploadAnexo, getAnexos, getSetores, getUsuarios } from "../services/api";
+import { uploadAnexo, getAnexos, getSetores, getUsuarios, aceitarTransferencia, devolverTransferencia } from "../services/api";
 import Link from "@mui/material/Link";
 import IconButton from "@mui/material/IconButton";
 import UploadFileRounded from "@mui/icons-material/UploadFileRounded";
 import Image from "@mui/material/CardMedia";
 import { useAuth } from "../contexts/AuthContext";
 
-type Props = { pendencia: Pendencia | null; onAtribuir?: () => void };
+type Props = { pendencia: Pendencia | null; onAtribuir?: () => void; onSaved?: () => void };
 
 function StatusChip({ situacao }: { situacao?: string }) {
   if (!situacao) return null;
@@ -236,12 +236,13 @@ function HistoricoContent({
   return <Typography variant="body2">{String(historico)}</Typography>;
 }
 
-export default function PendenciaDetails({ pendencia, onAtribuir }: Props) {
+export default function PendenciaDetails({ pendencia, onAtribuir, onSaved }: Props) {
   const [tab, setTab] = useState(0);
   const [anexos, setAnexos] = useState<{ filename: string; url: string }[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [setores, setSetores] = useState<{ id: number; nome_setor?: string }[]>([]);
   const [usuarios, setUsuarios] = useState<{ id: number; nomeUsuario?: string }[]>([]);
+  const [loadingAcao, setLoadingAcao] = useState(false);
   const { usuario } = useAuth();
 
   // Cria mapas para busca rápida de nomes por ID
@@ -340,6 +341,7 @@ export default function PendenciaDetails({ pendencia, onAtribuir }: Props) {
                 pendencia.idSetor != null &&
                 pendencia.idUsuario == null &&
                 usuario.idSetor === pendencia.idSetor &&
+                pendencia.statusTransferencia !== "PENDENTE" &&
                 onAtribuir && (
                   <Button
                     size="small"
@@ -348,6 +350,55 @@ export default function PendenciaDetails({ pendencia, onAtribuir }: Props) {
                   >
                     Atribuir
                   </Button>
+                )}
+              {/* Botões de Aceitar/Devolver quando a transferência está pendente */}
+              {usuario &&
+                pendencia.statusTransferencia === "PENDENTE" &&
+                ((pendencia.idUsuario != null && pendencia.idUsuario === usuario.id) ||
+                  (pendencia.idSetor != null && pendencia.idUsuario == null && usuario.idSetor === pendencia.idSetor)) && (
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="success"
+                      disabled={loadingAcao}
+                      onClick={async () => {
+                        if (!pendencia) return;
+                        try {
+                          setLoadingAcao(true);
+                          await aceitarTransferencia(pendencia.id);
+                          onSaved?.();
+                        } catch (e: any) {
+                          alert(e?.message ?? "Erro ao aceitar transferência");
+                        } finally {
+                          setLoadingAcao(false);
+                        }
+                      }}
+                    >
+                      Aceitar
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      disabled={loadingAcao}
+                      onClick={async () => {
+                        if (!pendencia) return;
+                        if (!confirm("Tem certeza que deseja devolver esta transferência?")) return;
+                        try {
+                          setLoadingAcao(true);
+                          await devolverTransferencia(pendencia.id);
+                          onSaved?.();
+                        } catch (e: any) {
+                          alert(e?.message ?? "Erro ao devolver transferência");
+                        } finally {
+                          setLoadingAcao(false);
+                        }
+                      }}
+                    >
+                      Devolver
+                    </Button>
+                  </Box>
                 )}
             </Box>
           )}

@@ -15,6 +15,7 @@ export type PendenciaDTO = {
   idUsuario?: number;
   idSetor?: number;
   idRoteiro?: number;
+  statusTransferencia?: string; // PENDENTE, ACEITA, DEVOLVIDA, ou null
   historico?: unknown;
 };
 
