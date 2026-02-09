@@ -19,11 +19,13 @@ public class PatchPendenciaDTO {
      * - idSetor: setor responsável pela pendência
      * - idUsuario: usuário responsável. Quando enviado como 0 (zero), será interpretado como "remover atribuição"
      *   e o campo idUsuario será definido como null na entidade.
+     * - idRoteiro: roteiro que a pendência deve seguir (opcional)
      *
-     * Ambos são opcionais no PATCH.
+     * Todos são opcionais no PATCH.
      */
     private Integer idSetor;
     private Integer idUsuario;
+    private Integer idRoteiro;
 
     // JSONB
     private JsonNode cliente;

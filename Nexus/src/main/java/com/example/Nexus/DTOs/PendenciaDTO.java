@@ -26,6 +26,7 @@ public class PendenciaDTO {
 
     private Integer idUsuario;
     private Integer idSetor;
+    private Integer idRoteiro;
 
     /** Histórico da pendência (JSONB). */
     private JsonNode historico;

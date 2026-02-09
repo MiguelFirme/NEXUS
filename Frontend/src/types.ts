@@ -14,6 +14,7 @@ export type PendenciaDTO = {
   versao?: string;
   idUsuario?: number;
   idSetor?: number;
+  idRoteiro?: number;
   historico?: unknown;
 };
 
@@ -30,6 +31,7 @@ export type CreatePendenciaPayload = {
   versao?: string;
   idUsuario?: number;
   idSetor?: number;
+  idRoteiro?: number;
 };
 
 /** Payload para PATCH (PatchPendenciaDTO) */
@@ -48,6 +50,8 @@ export type PatchPendenciaPayload = Partial<{
    * Convenção: enviar 0 para remover atribuição (idUsuario = null no backend).
    */
   idUsuario: number;
+  /** Roteiro que a pendência deve seguir */
+  idRoteiro?: number;
 }>;
 
 /** Tipo usado na UI: mapeado do DTO para exibição */

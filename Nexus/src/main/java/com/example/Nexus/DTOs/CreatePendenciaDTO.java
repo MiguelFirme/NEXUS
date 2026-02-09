@@ -19,6 +19,7 @@ public class CreatePendenciaDTO {
 
     private Integer idUsuario;
     private Integer idSetor;
+    private Integer idRoteiro;
 
     // JSONB
     private JsonNode cliente;

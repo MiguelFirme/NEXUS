@@ -21,10 +21,15 @@ public class PendenciaService {
 
     private final PendenciaRepository pendenciaRepository;
     private final ObjectMapper objectMapper;
+    private final RoteiroService roteiroService;
 
-    public PendenciaService(PendenciaRepository pendenciaRepository, ObjectMapper objectMapper) {
+    public PendenciaService(
+            PendenciaRepository pendenciaRepository, 
+            ObjectMapper objectMapper,
+            RoteiroService roteiroService) {
         this.pendenciaRepository = pendenciaRepository;
         this.objectMapper = objectMapper;
+        this.roteiroService = roteiroService;
     }
 
     /* =========================
@@ -87,7 +92,9 @@ public class PendenciaService {
         // Coluna "numero" é NOT NULL no banco: usa valor do DTO ou gera um padrão
         String numero = dto.getNumero();
         if (numero == null || numero.isBlank()) {
-            numero = "PEN-" + System.currentTimeMillis();
+            // Gera número aleatório de 6 dígitos
+            int randomNum = (int) (Math.random() * 900000) + 100000; // 100000 a 999999
+            numero = String.valueOf(randomNum);
         }
         p.setNumero(numero);
         p.setEquipamento(dto.getEquipamento());
@@ -106,6 +113,7 @@ public class PendenciaService {
 
         p.setIdUsuario(dto.getIdUsuario());
         p.setIdSetor(dto.getIdSetor());
+        p.setIdRoteiro(dto.getIdRoteiro());
 
         // JSONB
         p.setCliente(dto.getCliente());
@@ -214,8 +222,21 @@ public class PendenciaService {
         if (dto.getObservacoes() != null) p.setObservacoes(dto.getObservacoes());
         if (dto.getVersao() != null) p.setVersao(dto.getVersao());
 
-        // Transferência / atribuição
-        if (dto.getIdSetor() != null) {
+        // Validação de roteiro antes de transferir setor
+        if (dto.getIdSetor() != null && !dto.getIdSetor().equals(idSetorAntes)) {
+            // Se a pendência está em um roteiro, valida se o setor destino é válido
+            if (p.getIdRoteiro() != null) {
+                boolean setorValido = roteiroService.isSetorValidoParaTransferencia(
+                        p.getIdRoteiro(), 
+                        idSetorAntes, 
+                        dto.getIdSetor()
+                );
+                if (!setorValido) {
+                    throw new RuntimeException(
+                        "Não é possível transferir para este setor. A pendência está em um roteiro e deve seguir a sequência definida."
+                    );
+                }
+            }
             p.setIdSetor(dto.getIdSetor());
         }
         if (dto.getIdUsuario() != null) {
@@ -225,6 +246,9 @@ public class PendenciaService {
             } else {
                 p.setIdUsuario(dto.getIdUsuario());
             }
+        }
+        if (dto.getIdRoteiro() != null) {
+            p.setIdRoteiro(dto.getIdRoteiro());
         }
 
         // JSONB
@@ -308,6 +332,7 @@ public class PendenciaService {
         dto.setVersao(p.getVersao());
         dto.setIdUsuario(p.getIdUsuario());
         dto.setIdSetor(p.getIdSetor());
+        dto.setIdRoteiro(p.getIdRoteiro());
         dto.setHistorico(p.getHistorico());
 
         return dto;

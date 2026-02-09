@@ -42,29 +42,33 @@ export default function App() {
       const data = await getPendencias(usuarioId);
       setPendenciasRaw(data);
       setPendencias(processPendencias(data));
+      return data;
     } catch (err) {
       console.error("Erro ao buscar pendências (verifique se o backend está rodando em " + (import.meta.env.VITE_API_URL ?? "http://localhost:8080") + ")", err);
       setPendenciasRaw([]);
       setPendencias([]);
+      return [];
     }
   };
 
   const applyFilters = async (filters?: { periodStart?: string; periodEnd?: string; status?: string; prioridade?: string; usuarioId?: number }) => {
     // Se o filtro de usuário mudou, precisa buscar novamente da API
     const novoUsuarioId = filters?.usuarioId;
+    let dataToFilter = pendenciasRaw;
+    
     if (novoUsuarioId !== filtroUsuarioId) {
       setFiltroUsuarioId(novoUsuarioId);
       // Busca pendências do usuário selecionado (ou todas se undefined)
-      await fetch(novoUsuarioId);
+      dataToFilter = await fetch(novoUsuarioId) ?? [];
       // Continua aplicando os outros filtros locais abaixo
     }
 
     if (!filters) {
-      setPendencias(processPendencias(pendenciasRaw));
+      setPendencias(processPendencias(dataToFilter));
       return;
     }
 
-    let filtered = [...pendenciasRaw];
+    let filtered = [...dataToFilter];
 
     // Filtrar por período
     if (filters.periodStart) {
@@ -131,15 +135,15 @@ export default function App() {
     // apenas busca pendências quando o auth estiver pronto e houver token
     if (!isReady || !token) return;
 
-    fetch();
+    fetch(filtroUsuarioId);
 
     // Refresh automático a cada 5 segundos
     const interval = setInterval(() => {
-      fetch();
+      fetch(filtroUsuarioId);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [isReady, token]);
+  }, [isReady, token, filtroUsuarioId]);
 
   if (isReady && !token) {
     return <Login />;

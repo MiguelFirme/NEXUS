@@ -37,6 +37,7 @@ public class Pendencia {
 
     private Integer idUsuario;
     private Integer idSetor;
+    private Integer idRoteiro; // Roteiro que a pendência deve seguir
 
     // 🔽 JSONB CORRETO
     @JdbcTypeCode(SqlTypes.JSON)

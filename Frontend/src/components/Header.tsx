@@ -6,14 +6,17 @@ import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
 import Avatar from "@mui/material/Avatar";
 import IconButton from "@mui/material/IconButton";
 import PeopleRounded from "@mui/icons-material/PeopleRounded";
+import RouteIcon from "@mui/icons-material/Route";
 import ExitToAppRounded from "@mui/icons-material/ExitToAppRounded";
 import { useState } from "react";
 import UsersModal from "./UsersModal";
+import RoteirosModal from "./RoteirosModal";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function Header() {
   const { usuario, logout } = useAuth();
   const [openUsers, setOpenUsers] = useState(false);
+  const [openRoteiros, setOpenRoteiros] = useState(false);
   return (
     <AppBar
       position="static"
@@ -63,8 +66,13 @@ export default function Header() {
           >
             MF
           </Avatar>
+          {usuario?.nivelUsuario && (usuario.nivelUsuario >= 3) ? (
+            <IconButton sx={{ ml: 1 }} onClick={() => setOpenRoteiros(true)} color="inherit" title="Gerenciar Roteiros">
+              <RouteIcon />
+            </IconButton>
+          ) : null}
           {usuario?.nivelUsuario === 4 ? (
-            <IconButton sx={{ ml: 1 }} onClick={() => setOpenUsers(true)} color="inherit">
+            <IconButton sx={{ ml: 1 }} onClick={() => setOpenUsers(true)} color="inherit" title="Gerenciar Usuários">
               <PeopleRounded />
             </IconButton>
           ) : null}
@@ -76,6 +84,7 @@ export default function Header() {
         </Box>
       </Toolbar>
       <UsersModal open={openUsers} onClose={() => setOpenUsers(false)} currentUserLevel={usuario?.nivelUsuario} />
+      <RoteirosModal open={openRoteiros} onClose={() => setOpenRoteiros(false)} />
     </AppBar>
   );
 }

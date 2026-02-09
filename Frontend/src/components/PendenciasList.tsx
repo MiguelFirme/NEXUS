@@ -1,9 +1,11 @@
+import { useState, useMemo } from "react";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
+import TableSortLabel from "@mui/material/TableSortLabel";
 import Chip from "@mui/material/Chip";
 import type { Pendencia } from "../types";
 
@@ -61,44 +63,124 @@ function AtrasadaChip({ atrasada }: { atrasada?: boolean }) {
   );
 }
 
+type SortField = "titulo" | "data" | "dataFinal" | "hora" | "situacao" | "prioridade" | "atrasada";
+type SortDirection = "asc" | "desc";
+
 export default function PendenciasList({ pendencias, onSelect }: Props) {
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedPendencias = useMemo(() => {
+    if (!sortField) return pendencias;
+
+    return [...pendencias].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case "titulo":
+          aValue = a.titulo?.toLowerCase() || "";
+          bValue = b.titulo?.toLowerCase() || "";
+          break;
+        case "data":
+          aValue = a.data ? new Date(a.data).getTime() : 0;
+          bValue = b.data ? new Date(b.data).getTime() : 0;
+          break;
+        case "dataFinal":
+          aValue = a.dataCriacao && a.prazoResposta
+            ? new Date(a.dataCriacao).getTime() + (a.prazoResposta * 24 * 60 * 60 * 1000)
+            : 0;
+          bValue = b.dataCriacao && b.prazoResposta
+            ? new Date(b.dataCriacao).getTime() + (b.prazoResposta * 24 * 60 * 60 * 1000)
+            : 0;
+          break;
+        case "hora":
+          aValue = a.hora || "";
+          bValue = b.hora || "";
+          break;
+        case "situacao":
+          aValue = a.situacao || "";
+          bValue = b.situacao || "";
+          break;
+        case "prioridade":
+          const prioridadeOrder: Record<string, number> = { Alta: 0, Média: 1, Baixa: 2 };
+          aValue = prioridadeOrder[a.prioridade || ""] ?? 3;
+          bValue = prioridadeOrder[b.prioridade || ""] ?? 3;
+          break;
+        case "atrasada":
+          aValue = a.atrasada ? 1 : 0;
+          bValue = b.atrasada ? 1 : 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [pendencias, sortField, sortDirection]);
+
+  const SortableHeader = ({ 
+    field, 
+    label 
+  }: { 
+    field: SortField; 
+    label: string;
+  }) => (
+    <TableCell
+      sx={{
+        fontWeight: 700,
+        bgcolor: "grey.50",
+        color: "text.secondary",
+        fontSize: "0.8rem",
+        cursor: "pointer",
+        userSelect: "none",
+        "&:hover": { bgcolor: "grey.100" },
+      }}
+      onClick={() => handleSort(field)}
+    >
+      <TableSortLabel
+        active={sortField === field}
+        direction={sortField === field ? sortDirection : "asc"}
+      >
+        {label}
+      </TableSortLabel>
+    </TableCell>
+  );
+
   return (
     <TableContainer sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
       <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
-              Pendência
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
-              Data
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
-              Data final
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
-              Hora
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
-              Situação
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
-              Prioridade
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700, bgcolor: "grey.50", color: "text.secondary", fontSize: "0.8rem" }}>
-              Status
-            </TableCell>
+            <SortableHeader field="titulo" label="Pendência" />
+            <SortableHeader field="data" label="Data" />
+            <SortableHeader field="dataFinal" label="Data final" />
+            <SortableHeader field="hora" label="Hora" />
+            <SortableHeader field="situacao" label="Situação" />
+            <SortableHeader field="prioridade" label="Prioridade" />
+            <SortableHeader field="atrasada" label="Status" />
           </TableRow>
         </TableHead>
         <TableBody>
-          {pendencias.length === 0 ? (
+          {sortedPendencias.length === 0 ? (
             <TableRow>
               <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
                 Nenhuma pendência encontrada
               </TableCell>
             </TableRow>
           ) : (
-            pendencias.map((p) => (
+            sortedPendencias.map((p) => (
               <TableRow
                 key={p.id}
                 hover

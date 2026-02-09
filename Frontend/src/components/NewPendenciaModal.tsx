@@ -20,7 +20,7 @@ import CalendarMonthRounded from "@mui/icons-material/CalendarMonthRounded";
 import AssignmentRounded from "@mui/icons-material/AssignmentRounded";
 import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import CancelRounded from "@mui/icons-material/CancelRounded";
-import { createPendencia, getErrorMessage, getSetores, getUsuarios } from "../services/api";
+import { createPendencia, getErrorMessage, getSetores, getUsuarios, getRoteirosAtivos, type RoteiroDTO } from "../services/api";
 
 const PRIORIDADES = [
   { value: "Baixa", label: "Baixa" },
@@ -37,8 +37,10 @@ type Props = {
 export default function NewPendenciaModal({ open, onClose, onCreated }: Props) {
   const [setores, setSetores] = useState<{ id: number; nome_setor?: string }[]>([]);
   const [usuarios, setUsuarios] = useState<{ id: number; nomeUsuario?: string }[]>([]);
+  const [roteiros, setRoteiros] = useState<RoteiroDTO[]>([]);
   const [idSetor, setIdSetor] = useState<number | "">("");
   const [idUsuario, setIdUsuario] = useState<number | "">("");
+  const [idRoteiro, setIdRoteiro] = useState<number | "">("");
   const [prioridade, setPrioridade] = useState("Média");
   const [prazoDias, setPrazoDias] = useState("");
   const [observacoes, setObservacoes] = useState("");
@@ -49,6 +51,7 @@ export default function NewPendenciaModal({ open, onClose, onCreated }: Props) {
     if (open) {
       getSetores().then(setSetores).catch(() => setSetores([]));
       getUsuarios().then(setUsuarios).catch(() => setUsuarios([]));
+      getRoteirosAtivos().then(setRoteiros).catch(() => setRoteiros([]));
     }
   }, [open]);
 
@@ -56,18 +59,21 @@ export default function NewPendenciaModal({ open, onClose, onCreated }: Props) {
     setError(null);
     setLoading(true);
     try {
-      const numero = `PEN-${Date.now()}`;
+      // Gera número aleatório de 6 dígitos
+      const numero = String(Math.floor(Math.random() * 900000) + 100000);
       await createPendencia({
         numero,
         situacao: "Aberta",
         idSetor: idSetor === "" ? undefined : Number(idSetor),
         idUsuario: idUsuario === "" ? undefined : Number(idUsuario),
+        idRoteiro: idRoteiro === "" ? undefined : Number(idRoteiro),
         prioridade: prioridade || undefined,
         prazoResposta: prazoDias === "" ? undefined : parseInt(prazoDias, 10),
         observacoes: observacoes?.trim() || undefined,
       });
       setIdSetor("");
       setIdUsuario("");
+      setIdRoteiro("");
       setPrioridade("Média");
       setPrazoDias("");
       setObservacoes("");
@@ -144,6 +150,24 @@ export default function NewPendenciaModal({ open, onClose, onCreated }: Props) {
           {usuarios.map((u) => (
             <MenuItem key={u.id} value={u.id}>
               {u.nomeUsuario ?? `Usuário ${u.id}`}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          fullWidth
+          label="Roteiro (opcional)"
+          value={idRoteiro}
+          onChange={(e) => setIdRoteiro(e.target.value === "" ? "" : Number(e.target.value))}
+          disabled={loading}
+          sx={{ mb: 2 }}
+          helperText="Selecione um roteiro para que a pendência siga uma sequência de setores"
+        >
+          <MenuItem value="">Nenhum</MenuItem>
+          {roteiros.map((r) => (
+            <MenuItem key={r.id} value={r.id}>
+              {r.nome} {r.setores && r.setores.length > 0 && `(${r.setores.length} setores)`}
             </MenuItem>
           ))}
         </TextField>

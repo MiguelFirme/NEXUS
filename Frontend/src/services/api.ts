@@ -149,3 +149,57 @@ export async function criarUsuario(payload: any): Promise<any> {
   const res = await api.post("/usuarios", payload);
   return res.data;
 }
+
+/** Roteiros */
+export type RoteiroDTO = {
+  id: number;
+  nome: string;
+  descricao?: string;
+  ativo: boolean;
+  dataCriacao: string;
+  setores?: RoteiroSetorDTO[];
+};
+
+export type RoteiroSetorDTO = {
+  id: number;
+  roteiroId: number;
+  idSetor: number;
+  ordem: number;
+  nomeSetor?: string;
+};
+
+export type CreateRoteiroDTO = {
+  nome: string;
+  descricao?: string;
+  ativo?: boolean;
+  setores: { idSetor: number; ordem: number }[];
+};
+
+export async function getRoteiros(): Promise<RoteiroDTO[]> {
+  const res = await api.get<RoteiroDTO[]>("/roteiros");
+  return res.data ?? [];
+}
+
+export async function getRoteirosAtivos(): Promise<RoteiroDTO[]> {
+  const res = await api.get<RoteiroDTO[]>("/roteiros/ativos");
+  return res.data ?? [];
+}
+
+export async function getRoteiro(id: number): Promise<RoteiroDTO> {
+  const res = await api.get<RoteiroDTO>(`/roteiros/${id}`);
+  return res.data;
+}
+
+export async function criarRoteiro(payload: CreateRoteiroDTO): Promise<RoteiroDTO> {
+  const res = await api.post<RoteiroDTO>("/roteiros", payload);
+  return res.data;
+}
+
+export async function atualizarRoteiro(id: number, payload: CreateRoteiroDTO): Promise<RoteiroDTO> {
+  const res = await api.put<RoteiroDTO>(`/roteiros/${id}`, payload);
+  return res.data;
+}
+
+export async function deletarRoteiro(id: number): Promise<void> {
+  await api.delete(`/roteiros/${id}`);
+}
