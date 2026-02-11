@@ -3,7 +3,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
-import Avatar from "@mui/material/Avatar";
 import IconButton from "@mui/material/IconButton";
 import PeopleRounded from "@mui/icons-material/PeopleRounded";
 import RouteIcon from "@mui/icons-material/Route";
@@ -56,16 +55,6 @@ export default function Header() {
           <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.6)" }}>
             {usuario?.cargoUsuario ?? "Desenvolvimento"}
           </Typography>
-          <Avatar
-            sx={{
-              width: 36,
-              height: 36,
-              bgcolor: "primary.main",
-              fontSize: "0.9rem",
-            }}
-          >
-            MF
-          </Avatar>
           {usuario?.nivelUsuario && (usuario.nivelUsuario >= 3) ? (
             <IconButton sx={{ ml: 1 }} onClick={() => setOpenRoteiros(true)} color="inherit" title="Gerenciar Roteiros">
               <RouteIcon />
