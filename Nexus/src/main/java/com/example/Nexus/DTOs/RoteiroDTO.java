@@ -11,5 +11,6 @@ public class RoteiroDTO {
     private String descricao;
     private Boolean ativo;
     private LocalDateTime dataCriacao;
-    private List<RoteiroSetorDTO> setores;
+    /** Passos na ordem: SETOR (idSetor, nomeSetor) ou USUARIO (idUsuario, nomeUsuario). */
+    private List<PassoRoteiroExibicaoDTO> passos;
 }

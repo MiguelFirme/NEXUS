@@ -152,13 +152,23 @@ export async function criarUsuario(payload: any): Promise<any> {
 }
 
 /** Roteiros */
+export type PassoRoteiroExibicaoDTO = {
+  id: number;
+  ordem: number;
+  tipo: "SETOR" | "USUARIO";
+  idSetor?: number;
+  nomeSetor?: string;
+  idUsuario?: number;
+  nomeUsuario?: string;
+};
+
 export type RoteiroDTO = {
   id: number;
   nome: string;
   descricao?: string;
   ativo: boolean;
   dataCriacao: string;
-  setores?: RoteiroSetorDTO[];
+  passos?: PassoRoteiroExibicaoDTO[];
 };
 
 export type RoteiroSetorDTO = {
@@ -169,11 +179,18 @@ export type RoteiroSetorDTO = {
   nomeSetor?: string;
 };
 
+export type PassoRoteiroCreate = {
+  tipo: "SETOR" | "USUARIO";
+  idSetor?: number;
+  idUsuario?: number;
+  ordem: number;
+};
+
 export type CreateRoteiroDTO = {
   nome: string;
   descricao?: string;
   ativo?: boolean;
-  setores: { idSetor: number; ordem: number }[];
+  passos: PassoRoteiroCreate[];
 };
 
 export async function getRoteiros(): Promise<RoteiroDTO[]> {

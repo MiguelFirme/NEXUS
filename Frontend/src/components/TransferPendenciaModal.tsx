@@ -43,6 +43,7 @@ export default function TransferPendenciaModal({
   const [loading, setLoading] = useState(false);
   const [roteiro, setRoteiro] = useState<RoteiroDTO | null>(null);
   const [setoresValidos, setSetoresValidos] = useState<number[]>([]);
+  const [proximoPassoUsuario, setProximoPassoUsuario] = useState<number | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -60,45 +61,63 @@ export default function TransferPendenciaModal({
       getRoteiro(pendencia.idRoteiro)
         .then((r) => {
           setRoteiro(r);
-          // Calcula setores válidos (próximo na sequência)
-          if (r.setores && pendencia.idSetor) {
-            const setorAtualIndex = r.setores.findIndex(s => s.idSetor === pendencia.idSetor);
-            if (setorAtualIndex >= 0 && setorAtualIndex < r.setores.length - 1) {
-              const proximoSetor = r.setores[setorAtualIndex + 1];
-              setSetoresValidos([proximoSetor.idSetor]);
-            } else {
-              setSetoresValidos([]); // Já está no último setor do roteiro
+          const passos = (r.passos ?? []).slice().sort((a, b) => a.ordem - b.ordem);
+          let setoresValidosNext: number[] = [];
+          let proximoUsuario: number | null = null;
+          // Se a pendência está atribuída a um usuário, estamos no passo desse usuário (não no setor dele)
+          const indicePorUsuario =
+            pendencia.idUsuario != null
+              ? passos.findIndex((p) => p.tipo === "USUARIO" && p.idUsuario === pendencia.idUsuario)
+              : -1;
+          const indicePorSetor =
+            pendencia.idSetor != null
+              ? passos.findIndex((p) => p.tipo === "SETOR" && p.idSetor === pendencia.idSetor)
+              : -1;
+          const indiceAtual = indicePorUsuario >= 0 ? indicePorUsuario : indicePorSetor;
+          if (indiceAtual >= 0 && indiceAtual < passos.length - 1) {
+            const proximo = passos[indiceAtual + 1];
+            if (proximo.tipo === "SETOR" && proximo.idSetor != null) {
+              setoresValidosNext = [proximo.idSetor];
+            } else if (proximo.tipo === "USUARIO" && proximo.idUsuario != null) {
+              proximoUsuario = proximo.idUsuario;
             }
-          } else {
-            setSetoresValidos([]);
           }
+          setSetoresValidos(setoresValidosNext);
+          setProximoPassoUsuario(proximoUsuario);
         })
         .catch(() => {
           setRoteiro(null);
           setSetoresValidos([]);
+          setProximoPassoUsuario(null);
         });
     } else {
       setRoteiro(null);
       setSetoresValidos([]);
+      setProximoPassoUsuario(null);
     }
 
-    // Define estado inicial
     const baseSetor = fixedSetorId ?? pendencia?.idSetor ?? null;
-    // Se há setor fixo (fluxo "Atribuir"), força modo usuário
-    // Mas se há roteiro, sempre força modo setor (não pode transferir para usuário)
     if (fixedSetorId != null && !pendencia?.idRoteiro) {
       setMode("usuario");
+    } else if (pendencia?.idRoteiro) {
+      setMode(initialMode);
     } else {
-      // Se há roteiro, força modo setor
-      if (pendencia?.idRoteiro) {
-        setMode("setor");
-      } else {
-        setMode(initialMode);
-      }
+      setMode(initialMode);
     }
     setSetorId(baseSetor ?? "");
     setUsuarioId(pendencia?.idUsuario ?? "");
   }, [open, pendencia, initialMode, fixedSetorId]);
+
+  useEffect(() => {
+    if (!open || !pendencia?.idRoteiro || !roteiro) return;
+    if (proximoPassoUsuario != null) {
+      setMode("usuario");
+      setUsuarioId(proximoPassoUsuario);
+    } else if (setoresValidos.length > 0) {
+      setMode("setor");
+      setSetorId(setoresValidos[0]);
+    }
+  }, [open, pendencia?.idRoteiro, roteiro, proximoPassoUsuario, setoresValidos.length]);
 
   const handleConfirm = async () => {
     if (!pendencia) return;
@@ -143,10 +162,15 @@ export default function TransferPendenciaModal({
     return filtered;
   })();
 
-  const effectiveUsuarios =
-    fixedSetorId != null
-      ? usuarios.filter((u) => u.idSetor === fixedSetorId)
-      : usuarios;
+  const effectiveUsuarios = (() => {
+    if (roteiro && proximoPassoUsuario != null) {
+      return usuarios.filter((u) => u.id === proximoPassoUsuario);
+    }
+    if (fixedSetorId != null) {
+      return usuarios.filter((u) => u.idSetor === fixedSetorId);
+    }
+    return usuarios;
+  })();
 
   const canConfirm =
     pendencia &&
@@ -165,7 +189,7 @@ export default function TransferPendenciaModal({
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             {roteiro && (
               <Typography variant="body2" color="info.main" sx={{ mb: 1, p: 1, bgcolor: "info.light", borderRadius: 1 }}>
-                ℹ️ Esta pendência está no roteiro "<strong>{roteiro.nome}</strong>". Apenas transferências para setores são permitidas, seguindo a sequência do roteiro.
+                ℹ️ Esta pendência está no roteiro "<strong>{roteiro.nome}</strong>". Siga a sequência do roteiro (próximo passo: setor ou usuário).
               </Typography>
             )}
             {fixedSetorId == null && !roteiro ? (
@@ -193,15 +217,17 @@ export default function TransferPendenciaModal({
               </Typography>
             ) : roteiro ? (
               <Typography variant="body2" color="text.secondary">
-                Transfira esta pendência para o <strong>próximo setor</strong> na sequência do roteiro.
+                {proximoPassoUsuario != null
+                  ? <>Transfira esta pendência para o <strong>próximo passo</strong>: usuário indicado na sequência do roteiro.</>
+                  : <>Transfira esta pendência para o <strong>próximo setor</strong> na sequência do roteiro.</>}
               </Typography>
             ) : null}
 
             {mode === "setor" && (
               <>
-                {roteiro && setoresValidos.length === 0 && (
+                {roteiro && setoresValidos.length === 0 && proximoPassoUsuario == null && (
                   <Typography variant="body2" color="warning.main" sx={{ mb: 1 }}>
-                    ⚠️ Esta pendência está no último setor do roteiro "{roteiro.nome}". Não é possível transferir para outro setor.
+                    ⚠️ Esta pendência está no último passo do roteiro "{roteiro.nome}". Não há próximo passo para transferir.
                   </Typography>
                 )}
                 <TextField

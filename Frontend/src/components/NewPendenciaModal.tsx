@@ -167,7 +167,7 @@ export default function NewPendenciaModal({ open, onClose, onCreated }: Props) {
           <MenuItem value="">Nenhum</MenuItem>
           {roteiros.map((r) => (
             <MenuItem key={r.id} value={r.id}>
-              {r.nome} {r.setores && r.setores.length > 0 && `(${r.setores.length} setores)`}
+              {r.nome} {r.passos && r.passos.length > 0 && `(${r.passos.length} passos)`}
             </MenuItem>
           ))}
         </TextField>

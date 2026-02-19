@@ -8,5 +8,6 @@ public class CreateRoteiroDTO {
     private String nome;
     private String descricao;
     private Boolean ativo;
-    private List<SetorOrdemDTO> setores; // Lista de setores com suas ordens
+    /** Passos na ordem: cada passo é SETOR (idSetor) ou USUARIO (idUsuario). */
+    private List<PassoRoteiroDTO> passos;
 }

@@ -233,11 +233,11 @@ public class PendenciaService {
         boolean transferiuUsuario = false;
         
         if (dto.getIdSetor() != null && !dto.getIdSetor().equals(idSetorAntes)) {
-            // Se a pendência está em um roteiro, valida se o setor destino é válido
             if (p.getIdRoteiro() != null) {
                 boolean setorValido = roteiroService.isSetorValidoParaTransferencia(
-                        p.getIdRoteiro(), 
-                        idSetorAntes, 
+                        p.getIdRoteiro(),
+                        idSetorAntes,
+                        idUsuarioAntes,
                         dto.getIdSetor()
                 );
                 if (!setorValido) {
@@ -250,12 +250,17 @@ public class PendenciaService {
             transferiuSetor = true;
         }
         if (dto.getIdUsuario() != null) {
-            // Convenção: idUsuario == 0 → remover atribuição (setar null)
             if (dto.getIdUsuario() == 0) {
                 p.setIdUsuario(null);
-                // Remover atribuição não é uma transferência pendente
             } else {
-                // Verifica se houve mudança: null -> não null, ou valores diferentes
+                if (p.getIdRoteiro() != null) {
+                    RoteiroService.ProximoPasso pp = roteiroService.getProximoPasso(
+                            p.getIdRoteiro(), idSetorAntes, idUsuarioAntes);
+                    if (pp != null && "USUARIO".equals(pp.tipo) && !pp.idUsuario.equals(dto.getIdUsuario())) {
+                        throw new RuntimeException(
+                                "Não é possível transferir para este usuário. No roteiro, o próximo passo é outro usuário.");
+                    }
+                }
                 boolean mudouUsuario = (idUsuarioAntes == null && dto.getIdUsuario() != null) ||
                                        (idUsuarioAntes != null && !idUsuarioAntes.equals(dto.getIdUsuario()));
                 p.setIdUsuario(dto.getIdUsuario());

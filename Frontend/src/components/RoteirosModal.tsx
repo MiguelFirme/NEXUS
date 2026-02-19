@@ -27,8 +27,10 @@ import {
   atualizarRoteiro,
   deletarRoteiro,
   getSetores,
+  getUsuarios,
   type RoteiroDTO,
   type CreateRoteiroDTO,
+  type PassoRoteiroCreate,
 } from "../services/api";
 
 type Props = {
@@ -36,27 +38,31 @@ type Props = {
   onClose: () => void;
 };
 
-type SetorOrdem = {
-  idSetor: number;
+type PassoForm = {
+  tipo: "SETOR" | "USUARIO";
+  idSetor?: number;
+  idUsuario?: number;
   ordem: number;
   nomeSetor?: string;
+  nomeUsuario?: string;
 };
 
 export default function RoteirosModal({ open, onClose }: Props) {
   const [roteiros, setRoteiros] = useState<RoteiroDTO[]>([]);
   const [setores, setSetores] = useState<{ id: number; nome_setor?: string }[]>([]);
+  const [usuarios, setUsuarios] = useState<{ id: number; nomeUsuario?: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<{
     nome: string;
     descricao: string;
     ativo: boolean;
-    setores: SetorOrdem[];
+    passos: PassoForm[];
   }>({
     nome: "",
     descricao: "",
     ativo: true,
-    setores: [],
+    passos: [],
   });
 
   const refreshRoteiros = () => {
@@ -73,6 +79,9 @@ export default function RoteirosModal({ open, onClose }: Props) {
     getSetores()
       .then(setSetores)
       .catch(() => setSetores([]));
+    getUsuarios()
+      .then((u) => setUsuarios(u || []))
+      .catch(() => setUsuarios([]));
   }, [open]);
 
   const resetForm = () => {
@@ -81,7 +90,7 @@ export default function RoteirosModal({ open, onClose }: Props) {
       nome: "",
       descricao: "",
       ativo: true,
-      setores: [],
+      passos: [],
     });
   };
 
@@ -91,60 +100,54 @@ export default function RoteirosModal({ open, onClose }: Props) {
       nome: roteiro.nome,
       descricao: roteiro.descricao || "",
       ativo: roteiro.ativo,
-      setores:
-        roteiro.setores?.map((s) => ({
-          idSetor: s.idSetor,
-          ordem: s.ordem,
-          nomeSetor: s.nomeSetor,
+      passos:
+        roteiro.passos?.map((p) => ({
+          tipo: p.tipo,
+          ordem: p.ordem,
+          idSetor: p.idSetor,
+          idUsuario: p.idUsuario,
+          nomeSetor: p.nomeSetor,
+          nomeUsuario: p.nomeUsuario,
         })) || [],
     });
   };
 
-  const addSetor = () => {
-    const novaOrdem = formData.setores.length > 0 ? Math.max(...formData.setores.map((s) => s.ordem)) + 1 : 1;
-    setFormData({
-      ...formData,
-      setores: [
-        ...formData.setores,
-        {
-          idSetor: setores[0]?.id || 0,
-          ordem: novaOrdem,
-        },
-      ],
-    });
+  const addPasso = (tipo: "SETOR" | "USUARIO") => {
+    const novaOrdem = formData.passos.length > 0 ? Math.max(...formData.passos.map((p) => p.ordem)) + 1 : 1;
+    const novo: PassoForm =
+      tipo === "SETOR"
+        ? { tipo: "SETOR", idSetor: setores[0]?.id ?? 0, ordem: novaOrdem }
+        : { tipo: "USUARIO", idUsuario: usuarios[0]?.id ?? 0, ordem: novaOrdem };
+    setFormData({ ...formData, passos: [...formData.passos, novo] });
   };
 
-  const removeSetor = (index: number) => {
-    const novos = formData.setores.filter((_, i) => i !== index);
-    // Reordena
-    novos.forEach((s, i) => {
-      s.ordem = i + 1;
+  const removePasso = (index: number) => {
+    const novos = formData.passos.filter((_, i) => i !== index);
+    novos.forEach((p, i) => {
+      p.ordem = i + 1;
     });
-    setFormData({ ...formData, setores: novos });
+    setFormData({ ...formData, passos: novos });
   };
 
-  const updateSetor = (index: number, field: keyof SetorOrdem, value: any) => {
-    const novos = [...formData.setores];
+  const updatePasso = (index: number, field: keyof PassoForm, value: any) => {
+    const novos = [...formData.passos];
     novos[index] = { ...novos[index], [field]: value };
-    setFormData({ ...formData, setores: novos });
+    setFormData({ ...formData, passos: novos });
   };
 
-  const moveSetor = (index: number, direction: "up" | "down") => {
+  const movePasso = (index: number, direction: "up" | "down") => {
     if (direction === "up" && index === 0) return;
-    if (direction === "down" && index === formData.setores.length - 1) return;
+    if (direction === "down" && index === formData.passos.length - 1) return;
 
-    const novos = [...formData.setores];
+    const novos = [...formData.passos];
     const temp = novos[index];
     const swapIndex = direction === "up" ? index - 1 : index + 1;
     novos[index] = novos[swapIndex];
     novos[swapIndex] = temp;
-
-    // Atualiza ordens
-    novos.forEach((s, i) => {
-      s.ordem = i + 1;
+    novos.forEach((p, i) => {
+      p.ordem = i + 1;
     });
-
-    setFormData({ ...formData, setores: novos });
+    setFormData({ ...formData, passos: novos });
   };
 
   const handleSave = async () => {
@@ -152,19 +155,23 @@ export default function RoteirosModal({ open, onClose }: Props) {
       alert("Nome é obrigatório");
       return;
     }
-    if (formData.setores.length === 0) {
-      alert("Adicione pelo menos um setor ao roteiro");
+    if (formData.passos.length === 0) {
+      alert("Adicione pelo menos um passo (setor ou usuário) ao roteiro");
       return;
     }
+
+    const passos: PassoRoteiroCreate[] = formData.passos.map((p, i) => ({
+      tipo: p.tipo,
+      ordem: i + 1,
+      idSetor: p.tipo === "SETOR" ? p.idSetor : undefined,
+      idUsuario: p.tipo === "USUARIO" ? p.idUsuario : undefined,
+    }));
 
     const payload: CreateRoteiroDTO = {
       nome: formData.nome.trim(),
       descricao: formData.descricao.trim() || undefined,
       ativo: formData.ativo,
-      setores: formData.setores.map((s) => ({
-        idSetor: s.idSetor,
-        ordem: s.ordem,
-      })),
+      passos,
     };
 
     try {
@@ -238,13 +245,18 @@ export default function RoteirosModal({ open, onClose }: Props) {
 
               <Box>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                  <Typography variant="subtitle2">Setores (ordem sequencial)</Typography>
-                  <Button size="small" startIcon={<AddIcon />} onClick={addSetor}>
-                    Adicionar Setor
-                  </Button>
+                  <Typography variant="subtitle2">Passos da rota (setores e/ou usuários na ordem desejada)</Typography>
+                  <Box sx={{ display: "flex", gap: 0.5 }}>
+                    <Button size="small" startIcon={<AddIcon />} onClick={() => addPasso("SETOR")}>
+                      + Setor
+                    </Button>
+                    <Button size="small" startIcon={<AddIcon />} onClick={() => addPasso("USUARIO")}>
+                      + Usuário
+                    </Button>
+                  </Box>
                 </Box>
 
-                {formData.setores.map((setor, index) => (
+                {formData.passos.map((passo, index) => (
                   <Box
                     key={index}
                     sx={{
@@ -261,34 +273,61 @@ export default function RoteirosModal({ open, onClose }: Props) {
                     <TextField
                       select
                       size="small"
-                      value={setor.idSetor}
-                      onChange={(e) => updateSetor(index, "idSetor", Number(e.target.value))}
-                      sx={{ minWidth: 200 }}
+                      value={passo.tipo}
+                      onChange={(e) => {
+                        const t = e.target.value as "SETOR" | "USUARIO";
+                        updatePasso(index, "tipo", t);
+                        if (t === "SETOR") updatePasso(index, "idUsuario", undefined);
+                        else updatePasso(index, "idSetor", undefined);
+                      }}
+                      sx={{ minWidth: 100 }}
                     >
-                      {setores.map((s) => (
-                        <MenuItem key={s.id} value={s.id}>
-                          {s.nome_setor ?? `Setor #${s.id}`}
-                        </MenuItem>
-                      ))}
+                      <MenuItem value="SETOR">Setor</MenuItem>
+                      <MenuItem value="USUARIO">Usuário</MenuItem>
                     </TextField>
-                    <Typography variant="body2" sx={{ minWidth: 60 }}>
-                      Ordem: {setor.ordem}
+                    {passo.tipo === "SETOR" ? (
+                      <TextField
+                        select
+                        size="small"
+                        value={passo.idSetor ?? ""}
+                        onChange={(e) => updatePasso(index, "idSetor", Number(e.target.value))}
+                        sx={{ minWidth: 200 }}
+                      >
+                        {setores.map((s) => (
+                          <MenuItem key={s.id} value={s.id}>
+                            {s.nome_setor ?? `Setor #${s.id}`}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    ) : (
+                      <TextField
+                        select
+                        size="small"
+                        value={passo.idUsuario ?? ""}
+                        onChange={(e) => updatePasso(index, "idUsuario", Number(e.target.value))}
+                        sx={{ minWidth: 200 }}
+                      >
+                        {usuarios.map((u) => (
+                          <MenuItem key={u.id} value={u.id}>
+                            {u.nomeUsuario ?? `Usuário #${u.id}`}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    )}
+                    <Typography variant="body2" sx={{ minWidth: 50 }}>
+                      #{passo.ordem}
                     </Typography>
-                    <IconButton
-                      size="small"
-                      onClick={() => moveSetor(index, "up")}
-                      disabled={index === 0}
-                    >
+                    <IconButton size="small" onClick={() => movePasso(index, "up")} disabled={index === 0}>
                       ↑
                     </IconButton>
                     <IconButton
                       size="small"
-                      onClick={() => moveSetor(index, "down")}
-                      disabled={index === formData.setores.length - 1}
+                      onClick={() => movePasso(index, "down")}
+                      disabled={index === formData.passos.length - 1}
                     >
                       ↓
                     </IconButton>
-                    <IconButton size="small" color="error" onClick={() => removeSetor(index)}>
+                    <IconButton size="small" color="error" onClick={() => removePasso(index)}>
                       <DeleteIcon />
                     </IconButton>
                   </Box>
@@ -321,7 +360,7 @@ export default function RoteirosModal({ open, onClose }: Props) {
                     <TableCell>Nome</TableCell>
                     <TableCell>Descrição</TableCell>
                     <TableCell>Ativo</TableCell>
-                    <TableCell>Setores</TableCell>
+                    <TableCell>Rota (passos)</TableCell>
                     <TableCell>Ações</TableCell>
                   </TableRow>
                 </TableHead>
@@ -333,9 +372,13 @@ export default function RoteirosModal({ open, onClose }: Props) {
                       <TableCell>{r.descricao || "-"}</TableCell>
                       <TableCell>{r.ativo ? "Sim" : "Não"}</TableCell>
                       <TableCell>
-                        {r.setores
+                        {r.passos
                           ?.sort((a, b) => a.ordem - b.ordem)
-                          .map((s) => s.nomeSetor || `Setor #${s.idSetor}`)
+                          .map((p) =>
+                            p.tipo === "SETOR"
+                              ? p.nomeSetor || `Setor #${p.idSetor}`
+                              : p.nomeUsuario || `Usuário #${p.idUsuario}`
+                          )
                           .join(" → ") || "-"}
                       </TableCell>
                       <TableCell>
