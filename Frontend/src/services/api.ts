@@ -67,10 +67,28 @@ function toPendencia(dto: PendenciaDTO): Pendencia {
   };
 }
 
+export type EstatisticasPendencias = {
+  totalCriadas: number;
+  quantidadeAtraso: number;
+  porStatus: { valor: string; quantidade: number }[];
+  porSituacao: { valor: string; quantidade: number }[];
+  porPrioridade: { valor: string; quantidade: number }[];
+};
+
 export async function getPendencias(usuarioId?: number): Promise<Pendencia[]> {
   const params = usuarioId != null ? { params: { usuarioId } } : {};
   const res = await api.get<PendenciaDTO[]>("/pendencias", params);
   return (res.data ?? []).map(toPendencia);
+}
+
+export async function getEstatisticasPendencias(params?: {
+  dataInicial?: string;
+  dataFinal?: string;
+}): Promise<EstatisticasPendencias> {
+  const res = await api.get<EstatisticasPendencias>("/pendencias/estatisticas", {
+    params: params ?? {},
+  });
+  return res.data;
 }
 
 export async function createPendencia(payload: CreatePendenciaPayload): Promise<PendenciaDTO> {

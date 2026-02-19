@@ -12,8 +12,14 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Service;
 
+import com.example.Nexus.DTOs.EstatisticasPendenciasDTO;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -661,5 +667,64 @@ public class PendenciaService {
         // remove ponto final sobrando
         if (s.endsWith(".")) s = s.substring(0, s.length() - 1);
         return s;
+    }
+
+    /* =========================
+       ESTATÍSTICAS
+       ========================= */
+
+    /**
+     * Estatísticas de pendências com filtro opcional por data de criação.
+     * dataInicial/dataFinal em formato yyyy-MM-dd (inclusive); se ambos null, considera todas.
+     */
+    public EstatisticasPendenciasDTO getEstatisticas(LocalDate dataInicial, LocalDate dataFinal) {
+        List<Pendencia> list;
+        if (dataInicial == null && dataFinal == null) {
+            list = pendenciaRepository.findAll();
+        } else {
+            LocalDateTime inicio = dataInicial != null
+                    ? dataInicial.atStartOfDay()
+                    : LocalDateTime.of(1970, 1, 1, 0, 0);
+            LocalDateTime fim = dataFinal != null
+                    ? dataFinal.atTime(LocalTime.MAX)
+                    : LocalDateTime.now().plusYears(100);
+            list = pendenciaRepository.findByDataCriacaoBetween(inicio, fim);
+        }
+
+        EstatisticasPendenciasDTO dto = new EstatisticasPendenciasDTO();
+        dto.setTotalCriadas(list.size());
+
+        LocalDateTime agora = LocalDateTime.now();
+        long atraso = list.stream()
+                .filter(p -> isAtrasada(p, agora))
+                .count();
+        dto.setQuantidadeAtraso(atraso);
+
+        dto.setPorStatus(toContagem(list.stream().map(Pendencia::getStatus).collect(Collectors.toList())));
+        dto.setPorSituacao(toContagem(list.stream().map(Pendencia::getSituacao).collect(Collectors.toList())));
+        dto.setPorPrioridade(toContagem(list.stream().map(Pendencia::getPrioridade).collect(Collectors.toList())));
+
+        return dto;
+    }
+
+    private boolean isAtrasada(Pendencia p, LocalDateTime agora) {
+        if (p.getDataCriacao() == null || p.getPrazoResposta() == null) return false;
+        LocalDateTime limite = p.getDataCriacao().plusDays(p.getPrazoResposta());
+        return agora.isAfter(limite);
+    }
+
+    private List<EstatisticasPendenciasDTO.ContagemDTO> toContagem(List<String> valores) {
+        Map<String, Long> map = valores.stream()
+                .filter(v -> v != null && !v.isBlank())
+                .collect(Collectors.groupingBy(String::trim, Collectors.counting()));
+        List<EstatisticasPendenciasDTO.ContagemDTO> out = new ArrayList<>();
+        map.forEach((valor, qtd) -> {
+            EstatisticasPendenciasDTO.ContagemDTO c = new EstatisticasPendenciasDTO.ContagemDTO();
+            c.setValor(valor);
+            c.setQuantidade(qtd);
+            out.add(c);
+        });
+        out.sort((a, b) -> Long.compare(b.getQuantidade(), a.getQuantidade()));
+        return out;
     }
 }

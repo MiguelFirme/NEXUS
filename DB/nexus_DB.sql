@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict ZpglOBQNYj8Bf0vVcwSSgaWXf4KCxTxc0H8ZxJ9d2zzFAHKWOr22c502Gsw5KKU
+\restrict 48Ws3RYBT4myQ17G6EDN7aX34bdrjazeo1dSa1jjqOwHteU6jbdy6yoialhfFfJ
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
 
--- Started on 2026-02-19 00:04:23
+-- Started on 2026-02-19 00:09:13
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -442,6 +442,12 @@ COPY nexus.roteiro_passos (id, roteiro_id, ordem, tipo, id_setor, id_usuario) FR
 27	6	4	SETOR	9	\N
 28	6	5	SETOR	4	\N
 29	6	6	SETOR	7	\N
+30	7	1	SETOR	1	\N
+31	7	2	USUARIO	\N	5
+32	7	3	SETOR	6	\N
+33	7	4	SETOR	8	\N
+34	7	5	SETOR	4	\N
+35	7	6	SETOR	7	\N
 \.
 
 
@@ -463,6 +469,7 @@ COPY nexus.roteiro_setores (id, roteiro_id, id_setor, ordem) FROM stdin;
 
 COPY nexus.roteiros (id, nome, descricao, ativo, data_criacao) FROM stdin;
 6	ITEM NOVO MANUFATURADO	\N	t	2026-02-18 23:58:50.351257
+7	ITEM NOVO COMERCIAL	\N	t	2026-02-19 00:08:13.107917
 \.
 
 
@@ -523,7 +530,7 @@ SELECT pg_catalog.setval('nexus.pendencias_id_seq', 43, true);
 -- Name: roteiro_passos_id_seq; Type: SEQUENCE SET; Schema: nexus; Owner: postgres
 --
 
-SELECT pg_catalog.setval('nexus.roteiro_passos_id_seq', 29, true);
+SELECT pg_catalog.setval('nexus.roteiro_passos_id_seq', 35, true);
 
 
 --
@@ -541,7 +548,7 @@ SELECT pg_catalog.setval('nexus.roteiro_setores_id_seq', 6, true);
 -- Name: roteiros_id_seq; Type: SEQUENCE SET; Schema: nexus; Owner: postgres
 --
 
-SELECT pg_catalog.setval('nexus.roteiros_id_seq', 6, true);
+SELECT pg_catalog.setval('nexus.roteiros_id_seq', 7, true);
 
 
 --
@@ -738,11 +745,11 @@ ALTER TABLE ONLY nexus.roteiro_setores
     ADD CONSTRAINT roteiro_setores_roteiro_id_fkey FOREIGN KEY (roteiro_id) REFERENCES nexus.roteiros(id) ON DELETE CASCADE;
 
 
--- Completed on 2026-02-19 00:04:23
+-- Completed on 2026-02-19 00:09:13
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZpglOBQNYj8Bf0vVcwSSgaWXf4KCxTxc0H8ZxJ9d2zzFAHKWOr22c502Gsw5KKU
+\unrestrict 48Ws3RYBT4myQ17G6EDN7aX34bdrjazeo1dSa1jjqOwHteU6jbdy6yoialhfFfJ
 

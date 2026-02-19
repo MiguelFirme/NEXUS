@@ -1,6 +1,7 @@
 package com.example.Nexus.Controllers;
 
 import com.example.Nexus.DTOs.CreatePendenciaDTO;
+import com.example.Nexus.DTOs.EstatisticasPendenciasDTO;
 import com.example.Nexus.DTOs.PatchPendenciaDTO;
 import com.example.Nexus.DTOs.UpdatePendenciaDTO;
 import com.example.Nexus.DTOs.PendenciaDTO;
@@ -10,6 +11,8 @@ import com.example.Nexus.config.CurrentUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -45,6 +48,29 @@ public class PendenciaController {
         
         // Comportamento padrão: lista pendências do próprio usuário/setor
         return pendenciaService.listarParaUsuario(user.getId(), user.getIdSetor());
+    }
+
+    /**
+     * Estatísticas de pendências com filtro opcional por data de criação.
+     * Parâmetros: dataInicial (yyyy-MM-dd), dataFinal (yyyy-MM-dd). Se omitidos, considera todas.
+     */
+    @GetMapping("/estatisticas")
+    public EstatisticasPendenciasDTO estatisticas(
+            @RequestParam(required = false) String dataInicial,
+            @RequestParam(required = false) String dataFinal
+    ) {
+        LocalDate di = parseDate(dataInicial);
+        LocalDate df = parseDate(dataFinal);
+        return pendenciaService.getEstatisticas(di, df);
+    }
+
+    private static LocalDate parseDate(String s) {
+        if (s == null || s.isBlank()) return null;
+        try {
+            return LocalDate.parse(s.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @GetMapping("/usuario/{idUsuario}")
