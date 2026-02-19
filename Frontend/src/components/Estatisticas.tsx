@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -19,7 +19,7 @@ export default function Estatisticas() {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<EstatisticasPendencias | null>(null);
 
-  const handleAplicar = async () => {
+  const carregar = async () => {
     setLoading(true);
     try {
       const res = await getEstatisticasPendencias({
@@ -33,6 +33,15 @@ export default function Estatisticas() {
       setLoading(false);
     }
   };
+
+  const handleAplicar = () => carregar();
+
+  // Carrega estatísticas ao abrir a aba (sem filtro de data)
+  useEffect(() => {
+    getEstatisticasPendencias({})
+      .then(setStats)
+      .catch(() => setStats(null));
+  }, []);
 
   return (
     <Box>

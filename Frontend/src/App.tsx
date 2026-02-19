@@ -39,6 +39,7 @@ export default function App() {
   });
   const [snackbar, setSnackbar] = useState<{ message: string; severity: "success" | "error" | "info" } | null>(null);
   const [filtroUsuarioId, setFiltroUsuarioId] = useState<number | undefined>(undefined);
+  const [abaPrincipal, setAbaPrincipal] = useState(0);
 
   const fetch = async (usuarioId?: number) => {
     try {
@@ -170,6 +171,15 @@ export default function App() {
     <Box sx={{ minHeight: "100vh", pb: 4 }}>
       <Header />
       <Container maxWidth="xl" sx={{ mt: 3, px: { xs: 2, sm: 3 } }}>
+        <Box sx={{ mb: 2 }}>
+          <Tabs value={abaPrincipal} onChange={(_, v) => setAbaPrincipal(v)} sx={{ minHeight: 48, mb: 1 }}>
+            <Tab label="Dashboard" id="aba-dashboard" />
+            <Tab label="Estatísticas" id="aba-estatisticas" />
+          </Tabs>
+        </Box>
+
+        {abaPrincipal === 0 && (
+          <>
         <Box sx={{ mb: 3 }}>
           <Typography variant="h4" fontWeight={700} color="text.primary" sx={{ letterSpacing: "-0.02em" }}>
             Dashboard
@@ -280,6 +290,20 @@ export default function App() {
             </Paper>
           </Grid>
         </Grid>
+          </>
+        )}
+
+        {abaPrincipal === 1 && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h4" fontWeight={700} color="text.primary" sx={{ letterSpacing: "-0.02em", mb: 1 }}>
+              Estatísticas
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+              Quantidade de pendências criadas, por status, prioridade, situação e em atraso
+            </Typography>
+            <Estatisticas />
+          </Box>
+        )}
       </Container>
 
       <NewPendenciaModal

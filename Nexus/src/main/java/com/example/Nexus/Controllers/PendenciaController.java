@@ -51,17 +51,19 @@ public class PendenciaController {
     }
 
     /**
-     * Estatísticas de pendências com filtro opcional por data de criação.
+     * Estatísticas das pendências visíveis para o usuário logado (mesmo critério do dashboard).
      * Parâmetros: dataInicial (yyyy-MM-dd), dataFinal (yyyy-MM-dd). Se omitidos, considera todas.
      */
     @GetMapping("/estatisticas")
     public EstatisticasPendenciasDTO estatisticas(
+            Authentication authentication,
             @RequestParam(required = false) String dataInicial,
             @RequestParam(required = false) String dataFinal
     ) {
+        CurrentUser user = (CurrentUser) authentication.getPrincipal();
         LocalDate di = parseDate(dataInicial);
         LocalDate df = parseDate(dataFinal);
-        return pendenciaService.getEstatisticas(di, df);
+        return pendenciaService.getEstatisticas(user.getId(), user.getIdSetor(), di, df);
     }
 
     private static LocalDate parseDate(String s) {

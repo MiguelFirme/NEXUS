@@ -674,13 +674,13 @@ public class PendenciaService {
        ========================= */
 
     /**
-     * Estatísticas de pendências com filtro opcional por data de criação.
-     * dataInicial/dataFinal em formato yyyy-MM-dd (inclusive); se ambos null, considera todas.
+     * Estatísticas das pendências visíveis para o usuário (mesmo critério do dashboard).
+     * dataInicial/dataFinal em formato yyyy-MM-dd (inclusive); se ambos null, considera todas no período.
      */
-    public EstatisticasPendenciasDTO getEstatisticas(LocalDate dataInicial, LocalDate dataFinal) {
-        List<Pendencia> list;
+    public EstatisticasPendenciasDTO getEstatisticas(Integer idUsuario, Integer idSetor, LocalDate dataInicial, LocalDate dataFinal) {
+        List<Pendencia> base;
         if (dataInicial == null && dataFinal == null) {
-            list = pendenciaRepository.findAll();
+            base = pendenciaRepository.findAll();
         } else {
             LocalDateTime inicio = dataInicial != null
                     ? dataInicial.atStartOfDay()
@@ -688,8 +688,21 @@ public class PendenciaService {
             LocalDateTime fim = dataFinal != null
                     ? dataFinal.atTime(LocalTime.MAX)
                     : LocalDateTime.now().plusYears(100);
-            list = pendenciaRepository.findByDataCriacaoBetween(inicio, fim);
+            base = pendenciaRepository.findByDataCriacaoBetween(inicio, fim);
         }
+
+        // Mesmo filtro de visibilidade do dashboard: só as que o usuário enxerga
+        List<Pendencia> list = base.stream()
+                .filter(p -> {
+                    if (p.getIdUsuario() != null) {
+                        return p.getIdUsuario().equals(idUsuario);
+                    }
+                    if (p.getIdSetor() != null && idSetor != null) {
+                        return p.getIdSetor().equals(idSetor);
+                    }
+                    return false;
+                })
+                .collect(Collectors.toList());
 
         EstatisticasPendenciasDTO dto = new EstatisticasPendenciasDTO();
         dto.setTotalCriadas(list.size());
