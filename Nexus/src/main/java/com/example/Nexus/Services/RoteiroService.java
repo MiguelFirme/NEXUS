@@ -211,22 +211,77 @@ public class RoteiroService {
     }
 
     /**
-     * Valida transferência para setor quando a posição atual pode ser um passo de usuário
-     * (pendência atribuída a um usuário que aceitou a transferência).
+     * Índice do passo atual no roteiro (preferência por usuário se pendência atribuída a usuário).
      */
-    public boolean isSetorValidoParaTransferencia(Integer roteiroId, Integer setorAtual, Integer usuarioAtual, Integer setorDestino) {
-        if (roteiroId == null) return true;
-        Integer proximoSetor = getProximoSetorValido(roteiroId, setorAtual, usuarioAtual);
-        return proximoSetor != null && proximoSetor.equals(setorDestino);
+    private int getIndiceAtual(List<RoteiroPasso> passos, Integer setorAtual, Integer usuarioAtual) {
+        if (usuarioAtual != null) {
+            for (int i = 0; i < passos.size(); i++) {
+                RoteiroPasso p = passos.get(i);
+                if ("USUARIO".equals(p.getTipo()) && usuarioAtual.equals(p.getIdUsuario())) return i;
+            }
+        }
+        if (setorAtual != null) {
+            for (int i = 0; i < passos.size(); i++) {
+                RoteiroPasso p = passos.get(i);
+                if ("SETOR".equals(p.getTipo()) && setorAtual.equals(p.getIdSetor())) return i;
+            }
+        }
+        return -1;
     }
 
     /**
-     * Verifica se transferir para o usuário é o próximo passo válido no roteiro.
+     * Setores válidos para transferência: passos ANTERIORES ao atual + o PRÓXIMO passo.
+     * Não permite pular passos à frente (ex.: do 3 ir direto para o 5).
+     */
+    public List<Integer> getSetoresValidosParaTransferencia(Integer roteiroId, Integer setorAtual, Integer usuarioAtual) {
+        if (roteiroId == null) return List.of();
+        List<RoteiroPasso> passos = roteiroPassoRepository.findByRoteiroIdOrderByOrdem(roteiroId);
+        int indiceAtual = getIndiceAtual(passos, setorAtual, usuarioAtual);
+        if (indiceAtual == -1) return List.of();
+        List<Integer> setores = new ArrayList<>();
+        for (int i = 0; i < passos.size(); i++) {
+            if (i == indiceAtual) continue;
+            if (i > indiceAtual + 1) break;
+            RoteiroPasso p = passos.get(i);
+            if ("SETOR".equals(p.getTipo()) && p.getIdSetor() != null) setores.add(p.getIdSetor());
+        }
+        return setores;
+    }
+
+    /**
+     * Usuários válidos para transferência: passos ANTERIORES ao atual + o PRÓXIMO passo.
+     */
+    public List<Integer> getUsuariosValidosParaTransferencia(Integer roteiroId, Integer setorAtual, Integer usuarioAtual) {
+        if (roteiroId == null) return List.of();
+        List<RoteiroPasso> passos = roteiroPassoRepository.findByRoteiroIdOrderByOrdem(roteiroId);
+        int indiceAtual = getIndiceAtual(passos, setorAtual, usuarioAtual);
+        if (indiceAtual == -1) return List.of();
+        List<Integer> usuarios = new ArrayList<>();
+        for (int i = 0; i < passos.size(); i++) {
+            if (i == indiceAtual) continue;
+            if (i > indiceAtual + 1) break;
+            RoteiroPasso p = passos.get(i);
+            if ("USUARIO".equals(p.getTipo()) && p.getIdUsuario() != null) usuarios.add(p.getIdUsuario());
+        }
+        return usuarios;
+    }
+
+    /**
+     * Valida transferência para setor quando a posição atual pode ser um passo de usuário
+     * (pendência atribuída a um usuário que aceitou a transferência).
+     * Permite: próximo passo ou qualquer passo anterior. Não permite pular passos à frente.
+     */
+    public boolean isSetorValidoParaTransferencia(Integer roteiroId, Integer setorAtual, Integer usuarioAtual, Integer setorDestino) {
+        if (roteiroId == null) return true;
+        return getSetoresValidosParaTransferencia(roteiroId, setorAtual, usuarioAtual).contains(setorDestino);
+    }
+
+    /**
+     * Verifica se transferir para o usuário é válido no roteiro (próximo passo ou passos anteriores).
      */
     public boolean isUsuarioValidoParaTransferencia(Integer roteiroId, Integer setorAtual, Integer usuarioAtual, Integer idUsuarioDestino) {
         if (roteiroId == null) return true;
-        ProximoPasso pp = getProximoPasso(roteiroId, setorAtual, usuarioAtual);
-        return pp != null && "USUARIO".equals(pp.tipo) && idUsuarioDestino != null && idUsuarioDestino.equals(pp.idUsuario);
+        return idUsuarioDestino != null && getUsuariosValidosParaTransferencia(roteiroId, setorAtual, usuarioAtual).contains(idUsuarioDestino);
     }
 
     public List<Integer> getSetoresValidos(Integer roteiroId, Integer setorAtual) {

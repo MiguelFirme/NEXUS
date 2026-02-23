@@ -55,7 +55,7 @@ export default function App() {
     }
   };
 
-  const applyFilters = async (filters?: { periodStart?: string; periodEnd?: string; status?: string; prioridade?: string; usuarioId?: number }) => {
+  const applyFilters = async (filters?: { periodStart?: string; periodEnd?: string; status?: string; prioridade?: string; usuarioId?: number; numeroPesquisa?: string }) => {
     // Se o filtro de usuário mudou, precisa buscar novamente da API
     const novoUsuarioId = filters?.usuarioId;
     let dataToFilter = pendenciasRaw;
@@ -73,6 +73,12 @@ export default function App() {
     }
 
     let filtered = [...dataToFilter];
+
+    // Filtrar por número da pendência (contém o texto digitado)
+    if (filters.numeroPesquisa) {
+      const busca = filters.numeroPesquisa.trim().toLowerCase();
+      filtered = filtered.filter((p) => (p.numero ?? "").toLowerCase().includes(busca));
+    }
 
     // Filtrar por período
     if (filters.periodStart) {

@@ -16,6 +16,14 @@ import Typography from "@mui/material/Typography";
 import { getSetores, getUsuarios, transferirPendencia, getRoteiro, type RoteiroDTO } from "../services/api";
 import type { Pendencia } from "../types";
 
+type PassoDestino = {
+  tipo: "SETOR" | "USUARIO";
+  idSetor?: number;
+  idUsuario?: number;
+  label: string;
+  ordem?: number;
+};
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -42,7 +50,11 @@ export default function TransferPendenciaModal({
   const [usuarioId, setUsuarioId] = useState<number | "">("");
   const [loading, setLoading] = useState(false);
   const [roteiro, setRoteiro] = useState<RoteiroDTO | null>(null);
+  const [nextStep, setNextStep] = useState<PassoDestino | null>(null);
+  const [previousSteps, setPreviousSteps] = useState<PassoDestino[]>([]);
+  const [selectedPassoAnterior, setSelectedPassoAnterior] = useState<PassoDestino | null>(null);
   const [setoresValidos, setSetoresValidos] = useState<number[]>([]);
+  const [usuariosValidosRoteiro, setUsuariosValidosRoteiro] = useState<number[]>([]);
   const [proximoPassoUsuario, setProximoPassoUsuario] = useState<number | null>(null);
 
   useEffect(() => {
@@ -62,9 +74,6 @@ export default function TransferPendenciaModal({
         .then((r) => {
           setRoteiro(r);
           const passos = (r.passos ?? []).slice().sort((a, b) => a.ordem - b.ordem);
-          let setoresValidosNext: number[] = [];
-          let proximoUsuario: number | null = null;
-          // Se a pendência está atribuída a um usuário, estamos no passo desse usuário (não no setor dele)
           const indicePorUsuario =
             pendencia.idUsuario != null
               ? passos.findIndex((p) => p.tipo === "USUARIO" && p.idUsuario === pendencia.idUsuario)
@@ -74,25 +83,54 @@ export default function TransferPendenciaModal({
               ? passos.findIndex((p) => p.tipo === "SETOR" && p.idSetor === pendencia.idSetor)
               : -1;
           const indiceAtual = indicePorUsuario >= 0 ? indicePorUsuario : indicePorSetor;
-          if (indiceAtual >= 0 && indiceAtual < passos.length - 1) {
-            const proximo = passos[indiceAtual + 1];
-            if (proximo.tipo === "SETOR" && proximo.idSetor != null) {
-              setoresValidosNext = [proximo.idSetor];
-            } else if (proximo.tipo === "USUARIO" && proximo.idUsuario != null) {
-              proximoUsuario = proximo.idUsuario;
+          const setoresNext: number[] = [];
+          const usuariosNext: number[] = [];
+          let proximoUsuario: number | null = null;
+          let next: PassoDestino | null = null;
+          const anteriores: PassoDestino[] = [];
+          if (indiceAtual >= 0) {
+            for (let i = 0; i < passos.length; i++) {
+              if (i === indiceAtual) continue;
+              if (i > indiceAtual + 1) break;
+              const p = passos[i];
+              const label = p.tipo === "SETOR" ? (p.nomeSetor ?? `Setor #${p.idSetor}`) : (p.nomeUsuario ?? `Usuário #${p.idUsuario}`);
+              const passo: PassoDestino = {
+                tipo: p.tipo,
+                idSetor: p.idSetor ?? undefined,
+                idUsuario: p.idUsuario ?? undefined,
+                label: `Passo ${p.ordem} - ${label}`,
+                ordem: p.ordem,
+              };
+              if (i < indiceAtual) anteriores.push(passo);
+              else if (i === indiceAtual + 1) next = passo;
+              if (p.tipo === "SETOR" && p.idSetor != null) setoresNext.push(p.idSetor);
+              if (p.tipo === "USUARIO" && p.idUsuario != null) {
+                usuariosNext.push(p.idUsuario);
+                if (i === indiceAtual + 1) proximoUsuario = p.idUsuario;
+              }
             }
           }
-          setSetoresValidos(setoresValidosNext);
+          setNextStep(next);
+          setPreviousSteps(anteriores);
+          setSelectedPassoAnterior(anteriores.length > 0 ? anteriores[0] : null);
+          setSetoresValidos(setoresNext);
+          setUsuariosValidosRoteiro(usuariosNext);
           setProximoPassoUsuario(proximoUsuario);
         })
         .catch(() => {
           setRoteiro(null);
+          setNextStep(null);
+          setPreviousSteps([]);
           setSetoresValidos([]);
+          setUsuariosValidosRoteiro([]);
           setProximoPassoUsuario(null);
         });
     } else {
       setRoteiro(null);
+      setNextStep(null);
+      setPreviousSteps([]);
       setSetoresValidos([]);
+      setUsuariosValidosRoteiro([]);
       setProximoPassoUsuario(null);
     }
 
@@ -110,14 +148,54 @@ export default function TransferPendenciaModal({
 
   useEffect(() => {
     if (!open || !pendencia?.idRoteiro || !roteiro) return;
-    if (proximoPassoUsuario != null) {
+    if (proximoPassoUsuario != null && usuariosValidosRoteiro.length > 0) {
       setMode("usuario");
       setUsuarioId(proximoPassoUsuario);
     } else if (setoresValidos.length > 0) {
       setMode("setor");
       setSetorId(setoresValidos[0]);
+    } else if (usuariosValidosRoteiro.length > 0) {
+      setMode("usuario");
+      setUsuarioId(usuariosValidosRoteiro[0]);
     }
-  }, [open, pendencia?.idRoteiro, roteiro, proximoPassoUsuario, setoresValidos.length]);
+  }, [open, pendencia?.idRoteiro, roteiro, proximoPassoUsuario, setoresValidos.length, usuariosValidosRoteiro.length]);
+
+  const transferirParaPasso = async (passo: PassoDestino) => {
+    if (!pendencia) return;
+    if (passo.tipo === "SETOR" && passo.idSetor != null) {
+      await transferirPendencia(pendencia.id, { idSetor: passo.idSetor, idUsuario: 0 });
+    } else if (passo.tipo === "USUARIO" && passo.idUsuario != null) {
+      const user = usuarios.find((u) => u.id === passo.idUsuario);
+      await transferirPendencia(pendencia.id, {
+        idUsuario: passo.idUsuario,
+        idSetor: (user?.idSetor ?? pendencia.idSetor) as number,
+      });
+    }
+  };
+
+  const handleProximo = async () => {
+    if (!pendencia || !nextStep) return;
+    try {
+      setLoading(true);
+      await transferirParaPasso(nextStep);
+      onSaved?.();
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnterior = async () => {
+    if (!pendencia || !selectedPassoAnterior) return;
+    try {
+      setLoading(true);
+      await transferirParaPasso(selectedPassoAnterior);
+      onSaved?.();
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleConfirm = async () => {
     if (!pendencia) return;
@@ -128,7 +206,6 @@ export default function TransferPendenciaModal({
         if (!setorId || setorId === "") return;
         await transferirPendencia(pendencia.id, {
           idSetor: setorId as number,
-          // Convenção: 0 remove atribuição de usuário, deixando a pendência \"no setor\"
           idUsuario: 0,
         });
       } else {
@@ -136,7 +213,6 @@ export default function TransferPendenciaModal({
         const user = usuarios.find((u) => u.id === usuarioId);
         await transferirPendencia(pendencia.id, {
           idUsuario: usuarioId as number,
-          // Garante que o setor acompanhe o usuário, se informado
           idSetor: (user?.idSetor ?? (setorId || pendencia.idSetor)) as number,
         });
       }
@@ -163,8 +239,8 @@ export default function TransferPendenciaModal({
   })();
 
   const effectiveUsuarios = (() => {
-    if (roteiro && proximoPassoUsuario != null) {
-      return usuarios.filter((u) => u.id === proximoPassoUsuario);
+    if (roteiro && usuariosValidosRoteiro.length > 0) {
+      return usuarios.filter((u) => usuariosValidosRoteiro.includes(u.id));
     }
     if (fixedSetorId != null) {
       return usuarios.filter((u) => u.idSetor === fixedSetorId);
@@ -189,82 +265,114 @@ export default function TransferPendenciaModal({
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             {roteiro && (
               <Typography variant="body2" color="info.main" sx={{ mb: 1, p: 1, bgcolor: "info.light", borderRadius: 1 }}>
-                ℹ️ Esta pendência está no roteiro "<strong>{roteiro.nome}</strong>". Siga a sequência do roteiro (próximo passo: setor ou usuário).
+                ℹ️ Esta pendência está no roteiro "<strong>{roteiro.nome}</strong>". Use <strong>Próximo</strong> para avançar ou <strong>Anterior</strong> para voltar a um passo já percorrido.
               </Typography>
             )}
-            {fixedSetorId == null && !roteiro ? (
-              <>
-                <Typography variant="body2" color="text.secondary">
-                  Escolha se deseja transferir a pendência para um <strong>setor</strong> (todos do setor verão e poderão
-                  atribuir) ou diretamente para um <strong>usuário específico</strong>.
-                </Typography>
 
-                <FormControl component="fieldset">
-                  <FormLabel component="legend">Destino</FormLabel>
-                  <RadioGroup
-                    row
-                    value={mode}
-                    onChange={(e) => setMode(e.target.value as "setor" | "usuario")}
-                  >
-                    <FormControlLabel value="setor" control={<Radio />} label="Setor" />
-                    <FormControlLabel value="usuario" control={<Radio />} label="Usuário específico" />
-                  </RadioGroup>
-                </FormControl>
-              </>
-            ) : fixedSetorId != null && !roteiro ? (
-              <Typography variant="body2" color="text.secondary">
-                Atribua esta pendência a um <strong>usuário</strong> do setor selecionado.
-              </Typography>
-            ) : roteiro ? (
-              <Typography variant="body2" color="text.secondary">
-                {proximoPassoUsuario != null
-                  ? <>Transfira esta pendência para o <strong>próximo passo</strong>: usuário indicado na sequência do roteiro.</>
-                  : <>Transfira esta pendência para o <strong>próximo setor</strong> na sequência do roteiro.</>}
-              </Typography>
-            ) : null}
-
-            {mode === "setor" && (
+            {roteiro ? (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+                {nextStep ? (
+                  <Box sx={{ p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      Próximo passo
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} sx={{ mb: 1 }}>
+                      {nextStep.label.replace(/^Passo \d+ - /, "")}
+                    </Typography>
+                    <Button variant="contained" onClick={handleProximo} disabled={loading} fullWidth>
+                      Próximo
+                    </Button>
+                  </Box>
+                ) : (
+                  roteiro && previousSteps.length === 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      Esta pendência está no último passo do roteiro. Não há próximo passo.
+                    </Typography>
+                  )
+                )}
+                {previousSteps.length > 0 && (
+                  <Box sx={{ p: 1.5, bgcolor: "grey.100", borderRadius: 1 }}>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                      Voltar para passo anterior
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      value={selectedPassoAnterior?.label ?? ""}
+                      onChange={(e) => {
+                        const p = previousSteps.find((x) => x.label === e.target.value);
+                        setSelectedPassoAnterior(p ?? null);
+                      }}
+                      fullWidth
+                      sx={{ mb: 1 }}
+                    >
+                      {previousSteps.map((p) => (
+                        <MenuItem key={p.label} value={p.label}>
+                          {p.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                    <Button variant="outlined" onClick={handleAnterior} disabled={loading || !selectedPassoAnterior} fullWidth>
+                      Anterior
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            ) : (
               <>
-                {roteiro && setoresValidos.length === 0 && proximoPassoUsuario == null && (
-                  <Typography variant="body2" color="warning.main" sx={{ mb: 1 }}>
-                    ⚠️ Esta pendência está no último passo do roteiro "{roteiro.nome}". Não há próximo passo para transferir.
+                {fixedSetorId == null ? (
+                  <>
+                    <Typography variant="body2" color="text.secondary">
+                      Escolha se deseja transferir para um <strong>setor</strong> ou para um <strong>usuário específico</strong>.
+                    </Typography>
+                    <FormControl component="fieldset">
+                      <FormLabel component="legend">Destino</FormLabel>
+                      <RadioGroup row value={mode} onChange={(e) => setMode(e.target.value as "setor" | "usuario")}>
+                        <FormControlLabel value="setor" control={<Radio />} label="Setor" />
+                        <FormControlLabel value="usuario" control={<Radio />} label="Usuário específico" />
+                      </RadioGroup>
+                    </FormControl>
+                  </>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Atribua esta pendência a um <strong>usuário</strong> do setor selecionado.
                   </Typography>
                 )}
-                <TextField
-                  select
-                  label="Setor"
-                  size="small"
-                  value={setorId}
-                  onChange={(e) => setSetorId(e.target.value === "" ? "" : Number(e.target.value))}
-                  fullWidth
-                  disabled={fixedSetorId != null || (roteiro && setoresValidos.length === 0)}
-                  helperText={roteiro && setoresValidos.length === 0 ? "Não há mais setores disponíveis neste roteiro" : undefined}
-                >
-                  {effectiveSetores.map((s) => (
-                    <MenuItem key={s.id} value={s.id}>
-                      {s.nome_setor ?? `Setor #${s.id}`}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                {mode === "setor" && (
+                  <TextField
+                    select
+                    label="Setor"
+                    size="small"
+                    value={setorId}
+                    onChange={(e) => setSetorId(e.target.value === "" ? "" : Number(e.target.value))}
+                    fullWidth
+                    disabled={fixedSetorId != null}
+                  >
+                    {effectiveSetores.map((s) => (
+                      <MenuItem key={s.id} value={s.id}>
+                        {s.nome_setor ?? `Setor #${s.id}`}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
+                {mode === "usuario" && (
+                  <TextField
+                    select
+                    label="Usuário"
+                    size="small"
+                    value={usuarioId}
+                    onChange={(e) => setUsuarioId(e.target.value === "" ? "" : Number(e.target.value))}
+                    fullWidth
+                  >
+                    {effectiveUsuarios.map((u) => (
+                      <MenuItem key={u.id} value={u.id}>
+                        {u.nomeUsuario ?? `Usuário #${u.id}`}
+                        {u.idSetor != null ? ` (Setor ${u.idSetor})` : ""}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
               </>
-            )}
-
-            {mode === "usuario" && !roteiro && (
-              <TextField
-                select
-                label="Usuário"
-                size="small"
-                value={usuarioId}
-                onChange={(e) => setUsuarioId(e.target.value === "" ? "" : Number(e.target.value))}
-                fullWidth
-              >
-                {effectiveUsuarios.map((u) => (
-                  <MenuItem key={u.id} value={u.id}>
-                    {u.nomeUsuario ?? `Usuário #${u.id}`}{" "}
-                    {u.idSetor != null ? ` (Setor ${u.idSetor})` : ""}
-                  </MenuItem>
-                ))}
-              </TextField>
             )}
           </Box>
         )}
@@ -273,13 +381,15 @@ export default function TransferPendenciaModal({
         <Button onClick={onClose} disabled={loading}>
           Cancelar
         </Button>
-        <Button
-          onClick={handleConfirm}
-          variant="contained"
-          disabled={!canConfirm || loading || !pendencia}
-        >
-          Confirmar
-        </Button>
+        {!roteiro && (
+          <Button
+            onClick={handleConfirm}
+            variant="contained"
+            disabled={!canConfirm || loading || !pendencia}
+          >
+            Confirmar
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

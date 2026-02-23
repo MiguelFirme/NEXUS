@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict 48Ws3RYBT4myQ17G6EDN7aX34bdrjazeo1dSa1jjqOwHteU6jbdy6yoialhfFfJ
+\restrict KPBgv7YzrzpUp5hehJrUS6xzZFbd3dEeRMmcqeBVCyEpAlEQklglgHAs8mLSoIF
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
 
--- Started on 2026-02-19 00:09:13
+-- Started on 2026-02-22 22:43:59
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -426,6 +426,7 @@ ALTER TABLE ONLY nexus.usuarios ALTER COLUMN codigo_usuario SET DEFAULT nextval(
 --
 
 COPY nexus.pendencias (id, numero, data_criacao, data_atualizacao, equipamento, situacao, status, prioridade, prazo_resposta, origem, observacoes, versao, ultima_modificacao, modificado_por, id_usuario, id_setor, propostas_vinculadas, cliente, historico, id_roteiro, status_transferencia, id_setor_anterior, id_usuario_anterior) FROM stdin;
+58	1	2026-02-22 22:26:29.95984	\N	\N	Aberta	\N	Média	\N	\N	\N	\N	2026-02-22 22:27:46.254272	\N	\N	6	\N	\N	[{"acao": "Criação", "idSetor": 1, "situacao": "Aberta", "dataAlteracao": "2026-02-22T22:26:29.960843400"}, {"acao": "Atribuição", "idSetor": 1, "situacao": "Aberta", "descricao": "Usuário: — → 5", "idUsuario": 5, "dataAlteracao": "2026-02-22T22:26:40.427305500", "idSetorAnterior": 1, "situacaoAnterior": "Aberta"}, {"acao": "Aceitação de transferência", "idSetor": 1, "descricao": "Transferência aceita pelo recebedor", "idUsuario": 5, "dataAlteracao": "2026-02-22T22:26:58.161960600"}, {"acao": "Transferência", "idSetor": 6, "situacao": "Aberta", "descricao": "Setor: 1 → 6. Usuário: 5 → —", "dataAlteracao": "2026-02-22T22:27:24.894372200", "idSetorAnterior": 1, "situacaoAnterior": "Aberta", "idUsuarioAnterior": 5}, {"acao": "Aceitação de transferência", "idSetor": 6, "descricao": "Transferência aceita pelo recebedor", "dataAlteracao": "2026-02-22T22:27:46.254272300"}]	6	\N	\N	\N
 \.
 
 
@@ -521,7 +522,7 @@ COPY nexus.usuarios (codigo_usuario, nome_usuario, telefone_usuario, email_usuar
 -- Name: pendencias_id_seq; Type: SEQUENCE SET; Schema: nexus; Owner: postgres
 --
 
-SELECT pg_catalog.setval('nexus.pendencias_id_seq', 43, true);
+SELECT pg_catalog.setval('nexus.pendencias_id_seq', 58, true);
 
 
 --
@@ -530,7 +531,7 @@ SELECT pg_catalog.setval('nexus.pendencias_id_seq', 43, true);
 -- Name: roteiro_passos_id_seq; Type: SEQUENCE SET; Schema: nexus; Owner: postgres
 --
 
-SELECT pg_catalog.setval('nexus.roteiro_passos_id_seq', 35, true);
+SELECT pg_catalog.setval('nexus.roteiro_passos_id_seq', 36, true);
 
 
 --
@@ -745,11 +746,11 @@ ALTER TABLE ONLY nexus.roteiro_setores
     ADD CONSTRAINT roteiro_setores_roteiro_id_fkey FOREIGN KEY (roteiro_id) REFERENCES nexus.roteiros(id) ON DELETE CASCADE;
 
 
--- Completed on 2026-02-19 00:09:13
+-- Completed on 2026-02-22 22:43:59
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 48Ws3RYBT4myQ17G6EDN7aX34bdrjazeo1dSa1jjqOwHteU6jbdy6yoialhfFfJ
+\unrestrict KPBgv7YzrzpUp5hehJrUS6xzZFbd3dEeRMmcqeBVCyEpAlEQklglgHAs8mLSoIF
 

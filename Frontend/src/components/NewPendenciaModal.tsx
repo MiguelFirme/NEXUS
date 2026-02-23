@@ -59,10 +59,8 @@ export default function NewPendenciaModal({ open, onClose, onCreated }: Props) {
     setError(null);
     setLoading(true);
     try {
-      // Gera número aleatório de 6 dígitos
-      const numero = String(Math.floor(Math.random() * 900000) + 100000);
+      // Número é gerado no backend em ordem crescente (1, 2, 3, ...)
       await createPendencia({
-        numero,
         situacao: "Aberta",
         idSetor: idSetor === "" ? undefined : Number(idSetor),
         idUsuario: idUsuario === "" ? undefined : Number(idUsuario),

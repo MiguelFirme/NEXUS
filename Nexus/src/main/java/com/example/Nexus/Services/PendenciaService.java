@@ -101,12 +101,12 @@ public class PendenciaService {
     public PendenciaDTO criar(CreatePendenciaDTO dto) {
         Pendencia p = new Pendencia();
 
-        // Coluna "numero" é NOT NULL no banco: usa valor do DTO ou gera um padrão
+        // Coluna "numero" é NOT NULL no banco: usa valor do DTO ou gera o próximo em ordem crescente (1, 2, 3, ...)
         String numero = dto.getNumero();
         if (numero == null || numero.isBlank()) {
-            // Gera número aleatório de 6 dígitos
-            int randomNum = (int) (Math.random() * 900000) + 100000; // 100000 a 999999
-            numero = String.valueOf(randomNum);
+            Integer maxNum = pendenciaRepository.findMaxNumeroAsInteger();
+            int proximo = (maxNum == null ? 0 : maxNum) + 1;
+            numero = String.valueOf(proximo);
         }
         p.setNumero(numero);
         p.setEquipamento(dto.getEquipamento());
@@ -248,7 +248,7 @@ public class PendenciaService {
                 );
                 if (!setorValido) {
                     throw new RuntimeException(
-                        "Não é possível transferir para este setor. A pendência está em um roteiro e deve seguir a sequência definida."
+                        "Não é possível transferir para este setor. No roteiro, só é permitido o próximo passo ou passos anteriores."
                     );
                 }
             }
@@ -260,11 +260,11 @@ public class PendenciaService {
                 p.setIdUsuario(null);
             } else {
                 if (p.getIdRoteiro() != null) {
-                    RoteiroService.ProximoPasso pp = roteiroService.getProximoPasso(
-                            p.getIdRoteiro(), idSetorAntes, idUsuarioAntes);
-                    if (pp != null && "USUARIO".equals(pp.tipo) && !pp.idUsuario.equals(dto.getIdUsuario())) {
+                    boolean usuarioValido = roteiroService.isUsuarioValidoParaTransferencia(
+                            p.getIdRoteiro(), idSetorAntes, idUsuarioAntes, dto.getIdUsuario());
+                    if (!usuarioValido) {
                         throw new RuntimeException(
-                                "Não é possível transferir para este usuário. No roteiro, o próximo passo é outro usuário.");
+                                "Não é possível transferir para este usuário. No roteiro, só é permitido o próximo passo ou passos anteriores.");
                     }
                 }
                 boolean mudouUsuario = (idUsuarioAntes == null && dto.getIdUsuario() != null) ||

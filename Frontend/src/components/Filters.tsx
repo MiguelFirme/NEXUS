@@ -22,6 +22,7 @@ export default function Filters({ onApply, showUsuarioFilter = false }: Props) {
   const [statusExcept, setStatusExcept] = useState<boolean>(false);
   const [prioridadeExcept, setPrioridadeExcept] = useState<boolean>(false);
   const [usuarioId, setUsuarioId] = useState<number | "">("");
+  const [numeroPesquisa, setNumeroPesquisa] = useState<string>("");
   const [usuarios, setUsuarios] = useState<{ id: number; nomeUsuario?: string }[]>([]);
 
   useEffect(() => {
@@ -40,7 +41,8 @@ export default function Filters({ onApply, showUsuarioFilter = false }: Props) {
       statusExcept, 
       prioridade, 
       prioridadeExcept,
-      usuarioId: usuarioId === "" ? undefined : usuarioId 
+      usuarioId: usuarioId === "" ? undefined : usuarioId,
+      numeroPesquisa: numeroPesquisa.trim() || undefined,
     });
   };
 
@@ -53,6 +55,14 @@ export default function Filters({ onApply, showUsuarioFilter = false }: Props) {
         flexWrap: "wrap",
       }}
     >
+      <TextField
+        label="Número da pendência"
+        placeholder="Ex: 430952"
+        size="small"
+        value={numeroPesquisa}
+        onChange={(e) => setNumeroPesquisa(e.target.value)}
+        sx={{ minWidth: 160 }}
+      />
       <TextField
         label="Período início"
         type="date"
