@@ -1,19 +1,17 @@
 services:
   db:
     image: postgres:16-alpine
-    env_file:
-      - .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-nexus}
-      POSTGRES_USER: ${POSTGRES_USER:-nexus}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexus}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/db:/docker-entrypoint-initdb.d
     ports:
       - "${DB_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nexus} -d ${POSTGRES_DB:-nexus}"]
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,13 +20,10 @@ services:
     build:
       context: ./Nexus
       dockerfile: Dockerfile
-    env_file:
-      - .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-nexus}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-nexus}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-nexus}
-      BACKEND_PORT: ${BACKEND_PORT:-8080}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     volumes:
