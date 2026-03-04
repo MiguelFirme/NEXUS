@@ -5,3 +5,5 @@ target/
 *.md
 uploads/*
 !uploads/.gitkeep
+.env
+.env.*
