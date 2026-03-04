@@ -11,7 +11,6 @@ import { uploadAnexo, getAnexos, getSetores, getUsuarios, aceitarTransferencia, 
 import Link from "@mui/material/Link";
 import IconButton from "@mui/material/IconButton";
 import UploadFileRounded from "@mui/icons-material/UploadFileRounded";
-import Image from "@mui/material/CardMedia";
 import { useAuth } from "../contexts/AuthContext";
 
 type Props = { pendencia: Pendencia | null; onAtribuir?: () => void; onSaved?: () => void };

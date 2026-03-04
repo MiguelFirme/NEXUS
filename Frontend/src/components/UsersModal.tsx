@@ -14,6 +14,7 @@ import TextField from "@mui/material/TextField";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import {
   getUsuarios,
   atualizarNivelUsuario,
@@ -179,6 +180,13 @@ export default function UsersModal({
             </TableBody>
           </Table>
         </TableContainer>
+        {loading && (
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Carregando usuários...
+            </Typography>
+          </Box>
+        )}
       </DialogContent>
 
       <DialogActions>

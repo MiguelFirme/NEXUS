@@ -203,17 +203,17 @@ export default function TransferPendenciaModal({
       setLoading(true);
 
       if (mode === "setor") {
-        if (!setorId || setorId === "") return;
+        if (typeof setorId !== "number") return;
         await transferirPendencia(pendencia.id, {
-          idSetor: setorId as number,
+          idSetor: setorId,
           idUsuario: 0,
         });
       } else {
-        if (!usuarioId || usuarioId === "") return;
+        if (typeof usuarioId !== "number") return;
         const user = usuarios.find((u) => u.id === usuarioId);
         await transferirPendencia(pendencia.id, {
-          idUsuario: usuarioId as number,
-          idSetor: (user?.idSetor ?? (setorId || pendencia.idSetor)) as number,
+          idUsuario: usuarioId,
+          idSetor: (user?.idSetor ?? (typeof setorId === "number" ? setorId : pendencia.idSetor)) as number,
         });
       }
 
@@ -249,9 +249,9 @@ export default function TransferPendenciaModal({
   })();
 
   const canConfirm =
-    pendencia &&
-    ((mode === "setor" && setorId !== "" && setorId != null) ||
-      (mode === "usuario" && usuarioId !== "" && usuarioId != null));
+    !!pendencia &&
+    ((mode === "setor" && typeof setorId === "number") ||
+      (mode === "usuario" && typeof usuarioId === "number"));
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
