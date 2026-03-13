@@ -11,18 +11,19 @@ import Alert from "@mui/material/Alert";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Filters from "./components/Filters";
+import type { FiltersPayload } from "./components/Filters";
 import PendenciasList from "./components/PendenciasList";
 import PendenciaDetails from "./components/PendenciaDetails";
 import ActionsPanel from "./components/ActionsPanel";
 import Estatisticas from "./components/Estatisticas";
 import NewPendenciaModal from "./components/NewPendenciaModal";
 import EditPendenciaModal from "./components/EditPendenciaModal";
-import UpdateSituacaoModal from "./components/UpdateSituacaoModal";
 import TransferPendenciaModal from "./components/TransferPendenciaModal";
-import { getPendencias, deletePendencia } from "./services/api";
+import { getPendencias, getRoteiro, transferirPendencia, getUsuarios, getSetores } from "./services/api";
 import type { Pendencia } from "./types";
 import Login from "./components/Login";
 import { useAuth } from "./contexts/AuthContext";
+import { printRelatorioPendenciasAtivas } from "./utils/printRelatorioPendenciasAtivas";
 
 export default function App() {
   const { token, isReady, usuario } = useAuth();
@@ -31,7 +32,6 @@ export default function App() {
   const [selected, setSelected] = useState<Pendencia | null>(null);
   const [openNew, setOpenNew] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
-  const [openSituacao, setOpenSituacao] = useState(false);
   const [openTransfer, setOpenTransfer] = useState(false);
   const [transferConfig, setTransferConfig] = useState<{ mode: "transfer" | "atribuir"; fixedSetorId: number | null }>({
     mode: "transfer",
@@ -55,7 +55,7 @@ export default function App() {
     }
   };
 
-  const applyFilters = async (filters?: { periodStart?: string; periodEnd?: string; status?: string; prioridade?: string; usuarioId?: number; numeroPesquisa?: string }) => {
+  const applyFilters = async (filters?: FiltersPayload) => {
     // Se o filtro de usuário mudou, precisa buscar novamente da API
     const novoUsuarioId = filters?.usuarioId;
     let dataToFilter = pendenciasRaw;
@@ -99,24 +99,13 @@ export default function App() {
     }
 
     // Filtrar por status/situação
-    // Suporta flag "exceto": se filters.statusExcept for true, remove pendências com a situação selecionada
-    const statusExcept = (filters as any).statusExcept === true;
     if (filters.status && filters.status !== "Todas") {
-      if (statusExcept) {
-        filtered = filtered.filter((p) => p.situacao !== filters.status);
-      } else {
-        filtered = filtered.filter((p) => p.situacao === filters.status);
-      }
+      filtered = filtered.filter((p) => p.situacao === filters.status);
     }
 
     // Filtrar por prioridade
-    const prioridadeExcept = (filters as any).prioridadeExcept === true;
     if (filters.prioridade && filters.prioridade !== "Todas") {
-      if (prioridadeExcept) {
-        filtered = filtered.filter((p) => p.prioridade !== filters.prioridade);
-      } else {
-        filtered = filtered.filter((p) => p.prioridade === filters.prioridade);
-      }
+      filtered = filtered.filter((p) => p.prioridade === filters.prioridade);
     }
 
     setPendencias(processPendencias(filtered));
@@ -171,6 +160,91 @@ export default function App() {
 
   const showSnackbar = (message: string, severity: "success" | "error" | "info") => {
     setSnackbar({ message, severity });
+  };
+
+  const handleImprimirRelatorioAtivas = async () => {
+    try {
+      const setores = await getSetores();
+      const setoresMap = new Map<number, string>();
+      setores.forEach((s) => {
+        if (s.id != null && s.nome_setor) setoresMap.set(s.id, s.nome_setor);
+      });
+      const ativas = processPendencias(pendenciasRaw).filter((p) => p.situacao !== "Finalizada");
+      printRelatorioPendenciasAtivas(ativas, usuario, setoresMap);
+      showSnackbar("Relatório enviado para impressão.", "success");
+    } catch (e) {
+      console.error(e);
+      showSnackbar("Falha ao gerar relatório.", "error");
+    }
+  };
+
+  const handleTransferirProximaEtapa = async (p: Pendencia | null) => {
+    if (!p) return;
+
+    if (p.idRoteiro) {
+      try {
+        const roteiro = await getRoteiro(p.idRoteiro);
+
+        const confirmado = window.confirm(
+          `Esta pendência está vinculada ao roteiro "${roteiro.nome}".\n\n` +
+            "Tem certeza de que deseja passar a pendência para a próxima etapa definida nesse roteiro?"
+        );
+        if (!confirmado) return;
+
+        const passos = (roteiro.passos ?? []).slice().sort((a, b) => a.ordem - b.ordem);
+
+        const indicePorUsuario =
+          p.idUsuario != null
+            ? passos.findIndex((passo) => passo.tipo === "USUARIO" && passo.idUsuario === p.idUsuario)
+            : -1;
+        const indicePorSetor =
+          p.idSetor != null
+            ? passos.findIndex((passo) => passo.tipo === "SETOR" && passo.idSetor === p.idSetor)
+            : -1;
+
+        const indiceAtual = indicePorUsuario >= 0 ? indicePorUsuario : indicePorSetor;
+        if (indiceAtual < 0 || indiceAtual + 1 >= passos.length) {
+          showSnackbar("Esta pendência já está no último passo do roteiro.", "info");
+          return;
+        }
+
+        const proximoPasso = passos[indiceAtual + 1];
+
+        if (proximoPasso.tipo === "SETOR" && proximoPasso.idSetor != null) {
+          await transferirPendencia(p.id, { idSetor: proximoPasso.idSetor, idUsuario: 0 });
+        } else if (proximoPasso.tipo === "USUARIO" && proximoPasso.idUsuario != null) {
+          const usuarios = await getUsuarios();
+          const usuarioDestino = usuarios.find((u) => u.id === proximoPasso.idUsuario);
+          await transferirPendencia(p.id, {
+            idUsuario: proximoPasso.idUsuario,
+            idSetor: (usuarioDestino?.idSetor ?? p.idSetor) as number,
+          });
+        } else {
+          showSnackbar("Não foi possível determinar o próximo passo do roteiro.", "error");
+          return;
+        }
+
+        const atualizadas = await fetch(filtroUsuarioId);
+        if (atualizadas && p) {
+          const encontrada = atualizadas.find((x) => x.id === p.id);
+          if (encontrada) {
+            setSelected(encontrada);
+          }
+        }
+
+        showSnackbar("Pendência transferida para a próxima etapa.", "success");
+      } catch (e) {
+        console.error(e);
+        showSnackbar("Falha ao transferir para a próxima etapa.", "error");
+      }
+    } else {
+      showSnackbar(
+        "Esta pendência não está vinculada a um roteiro. Selecione manualmente o próximo passo (setor ou usuário).",
+        "info"
+      );
+      setTransferConfig({ mode: "transfer", fixedSetorId: null });
+      setOpenTransfer(true);
+    }
   };
 
   return (
@@ -238,27 +312,8 @@ export default function App() {
                 <ActionsPanel
                   onNew={() => setOpenNew(true)}
                   onRefresh={() => fetch(filtroUsuarioId)}
-                  onEdit={() => setOpenEdit(true)}
-                  onUpdateSituacao={() => setOpenSituacao(true)}
-                  onTransferir={() => {
-                    setTransferConfig({ mode: "transfer", fixedSetorId: null });
-                    setOpenTransfer(true);
-                  }}
-                  selected={selected}
-                    canCreate={!!usuario && (usuario.nivelUsuario ?? 0) > 2}
-                    canDelete={!!usuario && (usuario.nivelUsuario ?? 0) >= 3}
-                    onDelete={async (p) => {
-                      if (!p) return;
-                      try {
-                        await deletePendencia(p.id);
-                        setSelected(null);
-                        await fetch();
-                        showSnackbar("Pendência removida.", "success");
-                      } catch (e:any) {
-                        console.error(e);
-                        showSnackbar(e?.message ?? "Falha ao remover pendência.", "error");
-                      }
-                    }}
+                  onPrintRelatorio={handleImprimirRelatorioAtivas}
+                  canCreate={!!usuario && (usuario.nivelUsuario ?? 0) > 2}
                 />
               </Box>
             </Paper>
@@ -268,14 +323,13 @@ export default function App() {
             <Paper
               sx={{
                 p: 2.5,
-                minHeight: 420,
+                height: 420,
+                maxHeight: 420,
+                overflow: "auto",
                 borderRadius: 2,
                 boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
               }}
             >
-              <Typography variant="subtitle1" fontWeight={600} color="text.primary" sx={{ mb: 2 }}>
-                Detalhes
-              </Typography>
               <PendenciaDetails
                 pendencia={selected}
                 onAtribuir={() => {
@@ -285,13 +339,14 @@ export default function App() {
                 }}
                 onSaved={async () => {
                   await fetch(filtroUsuarioId);
-                  // Atualiza a pendência selecionada
                   if (selected) {
                     const updated = await getPendencias(filtroUsuarioId);
                     const found = updated.find(p => p.id === selected.id);
                     if (found) setSelected(found);
                   }
                 }}
+                onEdit={() => setOpenEdit(true)}
+                onTransferirProximaEtapa={() => selected && handleTransferirProximaEtapa(selected)}
               />
             </Paper>
           </Grid>
@@ -322,19 +377,16 @@ export default function App() {
         open={openEdit}
         onClose={() => setOpenEdit(false)}
         pendencia={selected}
+        currentUserLevel={usuario?.nivelUsuario}
         onSaved={() => {
           fetch();
           showSnackbar("Pendência atualizada.", "success");
         }}
-      />
-
-      <UpdateSituacaoModal
-        open={openSituacao}
-        onClose={() => setOpenSituacao(false)}
-        pendencia={selected}
-        onSaved={() => {
-          fetch();
-          showSnackbar("Situação atualizada.", "success");
+        onDeleted={async () => {
+          setOpenEdit(false);
+          setSelected(null);
+          await fetch(filtroUsuarioId);
+          showSnackbar("Pendência excluída.", "success");
         }}
       />
 

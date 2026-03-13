@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -13,6 +13,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 import Alert from "@mui/material/Alert";
+import Popover from "@mui/material/Popover";
 import BusinessRounded from "@mui/icons-material/BusinessRounded";
 import PersonRounded from "@mui/icons-material/PersonRounded";
 import BoltRounded from "@mui/icons-material/BoltRounded";
@@ -21,6 +22,8 @@ import AssignmentRounded from "@mui/icons-material/AssignmentRounded";
 import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import CancelRounded from "@mui/icons-material/CancelRounded";
 import { createPendencia, getErrorMessage, getSetores, getUsuarios, getRoteirosAtivos, type RoteiroDTO } from "../services/api";
+import { Calendar } from "react-date-range";
+import { ptBR } from "date-fns/locale";
 
 const PRIORIDADES = [
   { value: "Baixa", label: "Baixa" },
@@ -43,9 +46,12 @@ export default function NewPendenciaModal({ open, onClose, onCreated }: Props) {
   const [idRoteiro, setIdRoteiro] = useState<number | "">("");
   const [prioridade, setPrioridade] = useState("Média");
   const [prazoDias, setPrazoDias] = useState("");
+  const [prazoData, setPrazoData] = useState<Date | null>(null);
   const [observacoes, setObservacoes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const prazoAnchorRef = useRef<HTMLDivElement | null>(null);
+  const [prazoCalendarOpen, setPrazoCalendarOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -54,6 +60,18 @@ export default function NewPendenciaModal({ open, onClose, onCreated }: Props) {
       getRoteirosAtivos().then(setRoteiros).catch(() => setRoteiros([]));
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (prioridade === "Baixa") {
+      setPrazoDias("14");
+    } else if (prioridade === "Média") {
+      setPrazoDias("7");
+    } else if (prioridade === "Alta") {
+      setPrazoDias("3");
+    }
+  }, [open, prioridade]);
 
   const handleCreate = async () => {
     setError(null);
@@ -74,6 +92,7 @@ export default function NewPendenciaModal({ open, onClose, onCreated }: Props) {
       setIdRoteiro("");
       setPrioridade("Média");
       setPrazoDias("");
+      setPrazoData(null);
       setObservacoes("");
       onCreated?.();
       onClose();
@@ -192,23 +211,47 @@ export default function NewPendenciaModal({ open, onClose, onCreated }: Props) {
           </ToggleButtonGroup>
         </Box>
 
-        <TextField
-          fullWidth
-          label="Prazo para Resolução (dias)"
-          type="number"
-          inputProps={{ min: 0 }}
-          value={prazoDias}
-          onChange={(e) => setPrazoDias(e.target.value)}
-          disabled={loading}
-          sx={{ mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <CalendarMonthRounded sx={{ color: "action.active", fontSize: 20 }} />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <Box ref={prazoAnchorRef} sx={{ mb: 2 }}>
+          <TextField
+            fullWidth
+            label="Prazo para Resolução (dias)"
+            type="number"
+            inputProps={{ min: 0 }}
+            value={prazoDias}
+            onChange={(e) => setPrazoDias(e.target.value)}
+            disabled={loading}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <CalendarMonthRounded
+                    sx={{ color: "action.active", fontSize: 20, cursor: "pointer" }}
+                    onClick={() => !loading && setPrazoCalendarOpen(true)}
+                  />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Popover
+            open={prazoCalendarOpen}
+            onClose={() => setPrazoCalendarOpen(false)}
+            anchorEl={prazoAnchorRef.current}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          >
+            <Calendar
+              locale={ptBR}
+              date={prazoData ?? new Date()}
+              onChange={(date: Date) => {
+                setPrazoData(date);
+                const today = new Date();
+                const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const startOfSelected = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                const diffMs = startOfSelected.getTime() - startOfToday.getTime();
+                const diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+                setPrazoDias(diffDays.toString());
+              }}
+            />
+          </Popover>
+        </Box>
 
         <TextField
           fullWidth

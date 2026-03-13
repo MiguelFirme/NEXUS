@@ -8,6 +8,7 @@ import com.example.Nexus.DTOs.PendenciaDTO;
 import com.example.Nexus.Entities.Pendencia;
 import com.example.Nexus.Services.PendenciaService;
 import com.example.Nexus.config.CurrentUser;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -108,14 +109,20 @@ public class PendenciaController {
 
     /** Remove uma pendência (somente usuários nível >= 3) */
     @DeleteMapping("/{id}")
-    public java.util.Map<String, String> delete(@PathVariable Integer id, org.springframework.security.core.Authentication authentication) {
+    public ResponseEntity<?> delete(@PathVariable Integer id, org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof com.example.Nexus.config.CurrentUser)) {
+            return ResponseEntity.status(401).body(java.util.Map.of("message", "Não autenticado"));
+        }
         com.example.Nexus.config.CurrentUser current = (com.example.Nexus.config.CurrentUser) authentication.getPrincipal();
         var atual = usuarioService.buscarPorId(current.getId());
-        if (atual.getNivelUsuario() == null || atual.getNivelUsuario() < 3) {
-            throw new RuntimeException("Acesso negado");
+        Integer nivel = atual.getNivelUsuario();
+        if (nivel == null || nivel < 3) {
+            org.slf4j.LoggerFactory.getLogger(PendenciaController.class)
+                    .warn("DELETE pendência negado: userId={}, nivelUsuario={}, necessário >= 3", current.getId(), nivel);
+            return ResponseEntity.status(403).body(java.util.Map.of("message", "Acesso negado. Nível mínimo necessário: 3."));
         }
         pendenciaService.delete(id);
-        return java.util.Map.of("message", "Pendência removida");
+        return ResponseEntity.ok(java.util.Map.of("message", "Pendência removida"));
     }
 
     /**

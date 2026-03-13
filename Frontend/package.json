@@ -14,8 +14,13 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
+    "@mui/x-date-pickers": "^8.27.2",
+    "@mui/x-date-pickers-pro": "^8.27.2",
     "axios": "^1.13.4",
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.19",
     "react": "^19.2.0",
+    "react-date-range": "^2.0.1",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {

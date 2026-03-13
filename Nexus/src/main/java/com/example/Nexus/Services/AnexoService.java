@@ -47,6 +47,20 @@ public class AnexoService {
         }
     }
 
+    public boolean deleteAttachment(Integer pendenciaId, String filename) throws IOException {
+        if (filename == null || filename.isBlank()) return false;
+        String clean = filename.trim();
+        String prefix = pendenciaId + "_";
+        if (!clean.startsWith(prefix)) {
+            return false;
+        }
+        Path target = baseDir.resolve(clean).normalize();
+        if (!target.startsWith(baseDir)) {
+            return false;
+        }
+        return Files.deleteIfExists(target);
+    }
+
     public Resource loadAsResource(String filename) throws MalformedURLException {
         Path file = baseDir.resolve(filename).normalize();
         UrlResource resource = new UrlResource(file.toUri());

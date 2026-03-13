@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
@@ -8,6 +8,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import Chip from "@mui/material/Chip";
 import type { Pendencia } from "../types";
+import { getSetores } from "../services/api";
 
 type Props = {
   pendencias: Pendencia[];
@@ -63,12 +64,28 @@ function AtrasadaChip({ atrasada }: { atrasada?: boolean }) {
   );
 }
 
-type SortField = "titulo" | "data" | "dataFinal" | "hora" | "situacao" | "prioridade" | "atrasada";
+type SortField = "titulo" | "data" | "dataFinal" | "hora" | "situacao" | "prioridade" | "setor" | "atrasada";
 type SortDirection = "asc" | "desc";
 
 export default function PendenciasList({ pendencias, onSelect }: Props) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+  const [setores, setSetores] = useState<{ id: number; nome_setor?: string }[]>([]);
+
+  useEffect(() => {
+    getSetores().then(setSetores).catch(() => setSetores([]));
+  }, []);
+
+  const setoresMap = useMemo(() => {
+    const map = new Map<number, string>();
+    setores.forEach((s) => {
+      if (s.id && s.nome_setor) {
+        map.set(s.id, s.nome_setor);
+      }
+    });
+    return map;
+  }, [setores]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -116,6 +133,10 @@ export default function PendenciasList({ pendencias, onSelect }: Props) {
           aValue = prioridadeOrder[a.prioridade || ""] ?? 3;
           bValue = prioridadeOrder[b.prioridade || ""] ?? 3;
           break;
+        case "setor":
+          aValue = a.idSetor != null ? setoresMap.get(a.idSetor) ?? "" : "";
+          bValue = b.idSetor != null ? setoresMap.get(b.idSetor) ?? "" : "";
+          break;
         case "atrasada":
           aValue = a.atrasada ? 1 : 0;
           bValue = b.atrasada ? 1 : 0;
@@ -128,7 +149,7 @@ export default function PendenciasList({ pendencias, onSelect }: Props) {
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
-  }, [pendencias, sortField, sortDirection]);
+  }, [pendencias, sortField, sortDirection, setoresMap]);
 
   const SortableHeader = ({ 
     field, 
@@ -163,19 +184,20 @@ export default function PendenciasList({ pendencias, onSelect }: Props) {
       <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
-            <SortableHeader field="titulo" label="Pendência" />
+            <SortableHeader field="titulo" label="N°" />
             <SortableHeader field="data" label="Data" />
-            <SortableHeader field="dataFinal" label="Data final" />
+            <SortableHeader field="dataFinal" label="Prazo" />
             <SortableHeader field="hora" label="Hora" />
             <SortableHeader field="situacao" label="Situação" />
             <SortableHeader field="prioridade" label="Prioridade" />
+            <SortableHeader field="setor" label="Setor atual" />
             <SortableHeader field="atrasada" label="Status" />
           </TableRow>
         </TableHead>
         <TableBody>
           {sortedPendencias.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
+              <TableCell colSpan={8} align="center" sx={{ py: 4, color: "text.secondary" }}>
                 Nenhuma pendência encontrada
               </TableCell>
             </TableRow>
@@ -204,7 +226,7 @@ export default function PendenciasList({ pendencias, onSelect }: Props) {
                     } catch {
                       return "—";
                     }
-                  })() : "—"}
+                  })() : "N/A"}
                 </TableCell>
                 <TableCell sx={{ color: "text.secondary" }}>{p.hora ?? "—"}</TableCell>
                 <TableCell>
@@ -212,6 +234,9 @@ export default function PendenciasList({ pendencias, onSelect }: Props) {
                 </TableCell>
                 <TableCell>
                   <PrioridadeChip prioridade={p.prioridade} />
+                </TableCell>
+                <TableCell sx={{ color: "text.secondary" }}>
+                  {p.idSetor != null ? setoresMap.get(p.idSetor) ?? `Setor #${p.idSetor}` : "—"}
                 </TableCell>
                 <TableCell>
                   <AtrasadaChip atrasada={p.atrasada} />

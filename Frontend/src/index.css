@@ -8,3 +8,55 @@ body {
   background: linear-gradient(160deg, #f1f5f9 0%, #e2e8f0 50%, #f8fafc 100%);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Conteúdo que só deve aparecer na impressão */
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+  }
+
+  /* Esconde tudo por padrão ao imprimir */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Área específica da pendência que deve ser impressa */
+  .pendencia-print-page,
+  .pendencia-print-page * {
+    visibility: visible;
+  }
+
+  .pendencia-print-page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm;
+    min-height: 297mm;
+    box-sizing: border-box;
+    padding: 12mm;
+    margin: 0;
+  }
+
+  /* Elementos marcados como "no-print" não aparecem na impressão */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Esconde layout de tela na impressão e mostra layout específico */
+  .screen-only {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}

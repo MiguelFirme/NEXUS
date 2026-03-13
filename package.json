@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "@types/react-date-range": "^1.4.10"
+  }
+}

@@ -7,9 +7,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/db:/docker-entrypoint-initdb.d
+      - ./DB:/docker-entrypoint-initdb.d
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "0.0.0.0:${DB_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
@@ -25,7 +25,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      - "0.0.0.0:${BACKEND_PORT:-8080}:8080"
     volumes:
       - nexus_uploads:/app/uploads
     depends_on:
@@ -37,9 +37,10 @@ services:
       context: ./Frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:${BACKEND_PORT:-8080}}
+        # Troque localhost pelo IP do computador servidor
+        VITE_API_URL: http://192.168.0.137:8080
     ports:
-      - "${FRONTEND_PORT:-3000}:80"
+      - "0.0.0.0:${FRONTEND_PORT:-3000}:80"
     depends_on:
       - backend
 

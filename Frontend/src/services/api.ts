@@ -3,16 +3,25 @@ import type { PendenciaDTO, Pendencia, CreatePendenciaPayload, PatchPendenciaPay
 
 const baseURL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
-/** Extrai mensagem legível de erro (axios ou outro). */
+/** Extrai mensagem legível de erro (axios ou outro). Nunca retorna string vazia. */
 export function getErrorMessage(err: unknown): string {
-  if (axios.isAxiosError(err) && err.response?.data != null) {
-    const d = err.response.data;
-    if (typeof d === "string") return d;
-    if (typeof d === "object" && d !== null && "message" in d && typeof (d as { message: unknown }).message === "string")
-      return (d as { message: string }).message;
+  if (axios.isAxiosError(err)) {
+    const status = err.response?.status;
+    const d = err.response?.data;
+    if (d != null) {
+      if (typeof d === "string") {
+        const s = d.trim();
+        if (s) return s;
+      } else if (typeof d === "object" && d !== null && "message" in d && typeof (d as { message: unknown }).message === "string") {
+        const msg = (d as { message: string }).message.trim();
+        if (msg) return msg;
+      }
+    }
+    if (status != null) return `Erro na requisição (${status})`;
     return "Erro na requisição";
   }
-  return err instanceof Error ? err.message : "Erro desconhecido";
+  if (err instanceof Error && err.message) return err.message;
+  return "Erro desconhecido";
 }
 
 const api = axios.create({
@@ -114,20 +123,39 @@ export async function transferirPendencia(
   return res.data;
 }
 
-/** Anexos: upload and list */
-export async function uploadAnexo(pendenciaId: number, file: File): Promise<{ filename: string; url: string }> {
-  const fd = new FormData();
-  fd.append("file", file);
-  const res = await api.post(`/pendencias/${pendenciaId}/anexos`, fd, { headers: { "Content-Type": "multipart/form-data" } });
-  const d = res.data as { filename: string; url: string };
-  const u = d.url && (d.url as string).startsWith("http") ? d.url : `${baseURL}${d.url}`;
-  return { filename: d.filename, url: u };
+/** Anexos de pendências: inserção, listagem e remoção (todos exigem autenticação). */
+
+export type AnexoInfo = { filename: string; url: string };
+
+/** Envia um arquivo como anexo da pendência. */
+export async function uploadAnexo(pendenciaId: number, file: File): Promise<AnexoInfo> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await api.post<{ filename: string; url: string }>(
+    `/pendencias/${pendenciaId}/anexos`,
+    form,
+    { headers: { "Content-Type": "multipart/form-data" } }
+  );
+  const d = res.data;
+  const url = d.url?.startsWith("http") ? d.url : `${baseURL}${d.url}`;
+  return { filename: d.filename, url: url ?? "" };
 }
 
-export async function getAnexos(pendenciaId: number): Promise<{ filename: string; url: string }[]> {
+/** Lista anexos da pendência. */
+export async function getAnexos(pendenciaId: number): Promise<AnexoInfo[]> {
   const res = await api.get<{ filename: string; url: string }[]>(`/pendencias/${pendenciaId}/anexos`);
   const list = res.data ?? [];
-  return list.map((d) => ({ filename: d.filename, url: d.url && d.url.startsWith("http") ? d.url : `${baseURL}${d.url}` }));
+  return list.map((d) => ({
+    filename: d.filename,
+    url: d.url?.startsWith("http") ? d.url : `${baseURL}${d.url}`,
+  }));
+}
+
+/** Remove um anexo pelo nome do arquivo (envio via query param). */
+export async function deleteAnexo(pendenciaId: number, filename: string): Promise<void> {
+  await api.delete(`/pendencias/${pendenciaId}/anexos`, {
+    params: { filename },
+  });
 }
 
 /** Lista de usuários (GET /usuarios) */
